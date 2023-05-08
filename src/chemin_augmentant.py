@@ -5,6 +5,7 @@
 # sans utiliser de solveur externe
 # et qui la stock dans un fichier model-n-p.path
 import os
+import time
 from collections import deque
 
 from loguru import logger
@@ -13,7 +14,8 @@ from graph_visualizer import GraphVisualizer
 def check_minimum_cut():
     pass # TODO
 def find_augmenting_path(graph, capacities, source, sink):
-    logger.debug(f'Finding augmenting path from {source} to {sink}')
+    logger.debug(f'find_augmenting_path(graph, capacities, {source}, {sink})')
+    # logger.debug(f'Finding augmenting path from {source} to {sink}')
     # Recherche d'un chemin augmentant dans le graphe
     queue = deque([source])
     visited = set()
@@ -32,7 +34,6 @@ def find_augmenting_path(graph, capacities, source, sink):
             if capacity > 0 and neighbor not in visited:
                 parent[neighbor] = current
                 if neighbor == sink:
-                    logger.debug(f'Found augmenting path from {source} to {sink}')
                     found_path = True
                     break
                 queue.append(neighbor)
@@ -51,7 +52,9 @@ def find_augmenting_path(graph, capacities, source, sink):
         max_flow = min(capacities[path[i]][path[i+1]] for i in range(len(path)-1))
         logger.debug(f'Max flow: {max_flow}')
         for i in range(len(path)-1):
-            logger.debug(f'Updating capacities[{path[i]}][{path[i+1]}] from {capacities[path[i]][path[i+1]]} to {capacities[path[i]][path[i+1]] - max_flow}')
+            logger.debug(f'Updating capacities[{path[i]}][{path[i+1]}] from '
+                         f'{capacities[path[i]][path[i+1]]} to '
+                         f'{capacities[path[i]][path[i+1]] - max_flow}')
             capacities[path[i]][path[i+1]] -= max_flow
             capacities[path[i+1]][path[i]] += max_flow
         return max_flow
@@ -99,21 +102,32 @@ def solve_max_flow_augmenting_paths(file_path):
 
     # Compute max flow
     max_flow = max_flow_edmonds_karp(graph, capacities, source, sink)
+    print(f'Max flow: {max_flow}')
 
-    # Write output file to Path folder
-    with open(file_path.replace('Instances', 'Path').replace(
+    # Write output file
+    write_output_file_to(".", file_path, nodes, capacities, max_flow)
+    write_output_file_to("Path", file_path, nodes, capacities, max_flow)
+
+
+
+def write_output_file_to(path, file_path, nodes, capacities, max_flow):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    with open(path + "/" + file_path.replace('Instances',
+                                            'Path').replace(
             'inst', 'model').replace('.txt', '.path'), 'w') as f:
-        f.write(f'{max_flow}\n')
-        for i in range(nodes):
-            for j in range(nodes):
-                if capacities[i][j] > 0:
-                    f.write(f'{i} {j} {capacities[i][j]}\n')
+        if path == "Path":
+            f.write(f'{max_flow}\n')
+            for i in range(nodes):
+                for j in range(nodes):
+                    if capacities[i][j] > 0:
+                        f.write(f'{i} {j} {capacities[i][j]}\n')
 
 if __name__ == '__main__':
     import sys
-    # solve_max_flow_augmenting_paths(os.path.join('Instances/Instances',
-    #                                              sys.argv[1]))
+
+    if 2 < len(sys.argv):
+        if sys.argv[2] == "timed":
+            # logger disable
+            logger.remove()
     solve_max_flow_augmenting_paths(os.path.join(sys.argv[1]))
-    # solve_max_flow_augmenting_paths('Instances/Instances/inst-2-0.25.txt')
-    # solve_max_flow_augmenting_paths('Instances/Instances/inst-100-0.1.txt')
-    # solve_max_flow_augmenting_paths('Instances/Instances/inst-300-0.3.txt')

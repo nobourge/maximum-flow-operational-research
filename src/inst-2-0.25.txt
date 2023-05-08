@@ -1,0 +1,5 @@
+nodes 2
+source 0
+sink 1
+arcs 1
+0 1 10
