@@ -1,0 +1,11 @@
+\babel@toc {french}{}
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Programme linéaire}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Formulation}{3}{subsection.2.1}%
+\contentsline {section}{\numberline {3}Chemins augmentants}{3}{section.3}%
+\contentsline {section}{\numberline {4}Résultats}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Programme Linéaire}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Chemin augmentant}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Comparaison}{4}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Conclusions }{5}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Ressources}{6}{section.5}%

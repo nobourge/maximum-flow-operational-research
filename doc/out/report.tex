@@ -9,20 +9,19 @@
 \usepackage{subfigure}
 \usepackage[font={small}]{caption}
 \usepackage{float}
-\usepackage{listingsutf8}
+%\usepackage{listingsutf8}
 \usepackage{fullpage}
 \usepackage[nochapter]{vhistory}
-\usepackage{hyperref}
+\usepackage[colorlinks]{hyperref}
 \usepackage{titlesec}
 \usepackage{xcolor}
 \usepackage{verbatim}
 \usepackage{graphicx}
-\usepackage{subcaption}
 \usepackage{comment}
 
 \usepackage{natbib}
 \usepackage{url}
-\usepackage{algpseudocode}
+\usepackage[compatible]{algpseudocode}
 
 \usepackage{adjustbox}
 
@@ -51,12 +50,11 @@
     pdfpagemode=FullScreen,
 }
 
+\begin{document}
 
 \title{Flot Maximum}
 \author{Thomas Suau, Noé Bourgeois }
 \date{March 2023}
-
-\begin{document}
 
     \maketitle
     \tableofcontents
@@ -88,8 +86,8 @@
 
         Le problème de flot maximum peut être formulé comme un programme linéaire.
        Soit G=(V, A) un graphe orienté pondéré avec un nœud source s et un nœud puits t.
-       Soit fij la quantité de flux circulant sur l'arc (i,j) ∈ A,
-       et cij la capacité maximale de cet arc.
+       Soit $f_{ij}$ la quantité de flux circulant sur l'arc $(i,j) \in A$,
+       et $c_{ij}$ la capacité maximale de cet arc.
        Le problème de flot maximum peut être formulé comme suit :
 
     Maximiser :

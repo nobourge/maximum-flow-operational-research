@@ -1,0 +1,183 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[parfill]{parskip}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{subfigure}
+\usepackage[font={small}]{caption}
+\usepackage{float}
+\usepackage{listingsutf8}
+\usepackage{fullpage}
+\usepackage[nochapter]{vhistory}
+
+\usepackage[colorlinks]{hyperref}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{comment}
+
+\usepackage{natbib}
+\usepackage{url}
+\usepackage{algpseudocode}
+
+\usepackage{adjustbox}
+
+
+
+\newcommand*{\MyIncludeGraphicsMaxSize}[2][]{%
+    \begin{adjustbox}{max size={\textwidth}{\textheight}}
+        \includegraphics[#1]{#2}%
+    \end{adjustbox}
+}
+\usepackage{array,booktabs,ragged2e}
+\usepackage{lstdoc}
+\newcolumntype{R}[1]{>{\RaggedLeft\arraybackslash}p{#1}}
+\newcolumntype{D}[1]{>{\RaggedLeft\arraybackslash}p{#1}}
+
+% -----------------------------------------------------
+% -----------------------------------------------------
+% -----------------------------------------------------
+
+\hypersetup{
+%couleurs des liens cliquable changée pour une meilleur lisibilité
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdfpagemode=FullScreen,
+}
+
+\begin{document}
+
+\title{Flot Maximum}
+\author{Thomas Suau, Noé Bourgeois }
+\date{March 2023}
+
+    \maketitle
+    \tableofcontents
+    \newpage
+
+    \section{Introduction}
+    Le problème de flot maximum est un problème d'optimisation en théorie des graphes,
+    qui consiste à trouver le flot maximum qu'il est possible d'envoyer d'un nœud source à un nœud puits
+    dans un graphe pondéré orienté,
+    où les arcs ont des capacités maximales.
+
+    Dans ce rapport, nous allons présenter deux méthodes
+    pour résoudre le problème de flot maximum.
+    La première méthode est la résolution à l'aide d'un programme linéaire avec le solver glpk,
+    et la seconde méthode est la méthode des chemins augmentants implémentée en python3.
+
+
+    \section{Programme linéaire}
+    \subsection{Formulation}
+       — la formulation utilis´ee en d´ecrivant les diff´erentes notations comme en TP.
+       Expliquez en d´etail pourquoi les
+       variables,
+
+       contraintes et
+
+       fonction objectif du programme mod´elisent enti`erement le
+    probl`eme, tˆachez d’avoir une formulation de qualit´e.
+
+
+        Le problème de flot maximum peut être formulé comme un programme linéaire.
+       Soit G=(V, A) un graphe orienté pondéré avec un nœud source s et un nœud puits t.
+       Soit fij la quantité de flux circulant sur l'arc (i,j) ∈ A,
+       et cij la capacité maximale de cet arc.
+       Le problème de flot maximum peut être formulé comme suit :
+
+    Maximiser :
+
+$\sum_{(i,j) \in A} f_{ij}$
+
+sous les contraintes :
+
+$\sum_{(i,j) \in A} f_{ij} - \sum_{(j,i) \in A} f_{ji} =
+\begin{cases}
+-q & \text{si } i=s \
+q & \text{si } i=t \
+0 & \text{sinon}
+\end{cases}$
+
+où $q$ est le flot sortant de la source $s$
+
+$f_{ij} \leq c_{ij}$ pour tout $(i,j) \in A$
+
+$f_{ij} \geq 0$ pour tout $(i,j) \in A$
+
+Les variables $f_{ij}$ représentent le flot circulant sur l'arc $(i,j)$
+    et $c_{ij}$ est la capacité maximale de l'arc $(i,j)$.
+    Les contraintes expriment
+    la conservation de flux en chaque nœud,
+    la capacité maximale de chaque arc
+    et le fait que le flot doit être positif.
+
+   \section{Chemins augmentants}
+
+— une description de la m´ethode des chemins augmentant impl´ement´ee,
+
+
+
+
+   \section{Résultats}
+    système d’exploitation de la machine sur laquelle nous fait
+    nos tests: Windows 11
+
+— une analyse des r´esultats de la r´esolution des diff´erentes instances.
+   Cette analyse peut comparer les
+temps de r´esolution
+   pour des instances de taille croissante
+
+   pour les deux m´ethodes de r´esolution.
+
+Vous pouvez analyser
+   les temps de r´esolution moyens ainsi que
+
+   l’´ecart-type pour les diff´erentes tailles
+d’instances.
+   Tˆachez d’interpr´eter le pourquoi des r´esultats et
+
+   identifiez si une m´ethode semble plus
+appropri´ee.
+
+Un nombre exhaustif d’instances est fournies. Le rapport ne doit pas contenir les r´esultats de toutes
+les instances. S´electionnez les instances afin d’ˆetre le plus complet dans vos r´esultats.
+
+
+%\begin{comment}
+
+
+
+
+    \newpage
+
+    \subsection{Conclusions }
+
+
+
+    \newpage
+
+
+
+    \section{Ressources}
+    \underlined{(cf. énoncé)}
+    Rédaction scientifique:
+
+    \href{http://informatique.umons.ac.be/algo/redacSci.pdf.}{http://informatique.umons.ac.be/algo/redacSci.pdf.
+    }
+
+    Ressources bibliographiques:
+
+    \href{https://www.bibtex.com/.}{https://www.bibtex.com/.}
+
+    L'écriture du code a été accélérée à l'aide du plugin "Github Copilot"
+    \href{https://copilot.github.com/}{https://copilot.github.com/}
+
+
+\end{document}
