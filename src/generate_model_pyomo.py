@@ -27,13 +27,13 @@ def solve_max_flow_glpk(file_path):
 
     # Define constraints
     model.node_balance = pyo.ConstraintList()
-    for i in range(1, nodes + 1):
-        if i == source:
+    for index in range(1, nodes + 1):
+        if index == source:
             model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == source) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == source))
-        elif i == sink:
+        elif index == sink:
             model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == sink) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == sink))
         else:
-            model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == i) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == i))
+            model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == index) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == index))
 
     model.arc_capacity = pyo.ConstraintList()
     for i, j, c in arcs_data:

@@ -7,7 +7,7 @@ import subprocess
 
 def main():
     #
-    for file in os.listdir("Instances/Instances"):
+    for file in os.listdir("Instances"):
         # os.listdir() returns a list containing the names of the entries in the directory given by path.
         if file.startswith('inst-'):
             print(f'Running generate_model.py on {file}')

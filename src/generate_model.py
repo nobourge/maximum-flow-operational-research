@@ -1,19 +1,5 @@
-# script python3 nomm´e generate model.py
-# prenant en param`etre en ligne de commande le nom
-# d’une instance inst-n-p.txt dans le mˆeme dossier
-# et qui g´en`ere un programme lin´eaire en nombre
-# entiers de cette instance au format CPLEX LP vu en TP.
-# Ce programme doit ˆetre sauv´e dans un fichier
-# model-n-p.lp.
-# Le script appel´e sur l’instance inst-300-0.3.txt via la commande
-# python3 generate_model.py inst-300-0.3.txt
-# doit g´en´erer un ficher model-300-0.3.lp.
-# Comme utilis´e en TP, le fichier doit pouvoir ˆetre r´esolu et
-# sauver les r´esultats avec la commande
-# glpsol --lp model-300-0.3.lp -o model-300-0.3.sol
-
-
 import pyomo.environ as pyo
+
 
 def solve_max_flow_glpk(file_path):
     # Read input file
@@ -31,22 +17,42 @@ def solve_max_flow_glpk(file_path):
     model = pyo.ConcreteModel()
 
     # Define variables
-    model.f = pyo.Var([(i, j) for i, j, c in arcs_data]
-                      , within=pyo.NonNegativeReals)
+    model.f = pyo.Var([(i, j) for i, j, c in arcs_data],
+                      within=pyo.NonNegativeReals)
 
     # Define objective
-    model.obj = pyo.Objective(expr=pyo.summation(model.f)
-                              , sense=pyo.maximize)
+    model.obj = pyo.Objective(expr=pyo.summation(model.f), sense=pyo.maximize)
+
 
     # Define constraints
     model.node_balance = pyo.ConstraintList()
-    for i in range(1, nodes + 1):
-        if i == source:
-            model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == source) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == source))
-        elif i == sink:
-            model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == sink) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == sink))
+    for num in range(1, nodes + 1):
+        if num == source:
+            node_balance_expr_1 = sum(model.f[i, j]
+                                    for i, j, c in arcs_data if i == source)
+            node_balance_expr_2 = sum(model.f[j, i]
+                                    for j, i, c in arcs_data if j == source)
+
+            model.node_balance.add(pyo.Constraint(
+                expr=node_balance_expr_1 == node_balance_expr_2))
+
+        elif num == sink:
+            node_balance_expr_1 = sum(model.f[i, j]
+                                    for i, j, c in arcs_data if i == sink)
+            node_balance_expr_2 = sum(model.f[j, i]
+                                    for j, i, c in arcs_data if j == sink)
+
+            model.node_balance.add(pyo.Constraint(
+                expr=node_balance_expr_1 == node_balance_expr_2))
+
         else:
-            model.node_balance.add(pyo.summation(model.f[i, j] for i, j, c in arcs_data if i == i) == pyo.summation(model.f[j, i] for j, i, c in arcs_data if j == i))
+            node_balance_expr_1 = sum(model.f[i, j]
+                                    for i, j, c in arcs_data if i == num)
+            node_balance_expr_2 = sum(model.f[j, i]
+                                    for j, i, c in arcs_data if j == num)
+
+            model.node_balance.add(pyo.Constraint(
+                expr=node_balance_expr_1 == node_balance_expr_2))
 
     model.arc_capacity = pyo.ConstraintList()
     for i, j, c in arcs_data:
@@ -57,7 +63,7 @@ def solve_max_flow_glpk(file_path):
     solver.solve(model)
 
     # Print solution
-    print('Maximum flow: ', pyo.value(model.obj))
+    print('Maximum flow:', pyo.value(model.obj))
     print('Flow on arcs:')
     for i, j, c in arcs_data:
         print(f'f({i}, {j}) = {pyo.value(model.f[i, j])}')
@@ -72,4 +78,5 @@ def solve_max_flow_glpk(file_path):
     with open(file_path.replace('.txt', '.lp'), 'w') as f:
         model.pprint(ostream=f)
 
-solve_max_flow_glpk('Instances/Instances/inst-300-0.3.txt')
+
+solve_max_flow_glpk('./Instances/inst-300-0.3.txt')
