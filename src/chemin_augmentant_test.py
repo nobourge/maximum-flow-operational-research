@@ -14,7 +14,7 @@ def main():
     print(f'Current working directory: {os.getcwd()}')
     print(f"os.listdir(): {os.listdir().sort()}")
     print(f"os.listdir(): {os.listdir('.')}")
-    print(f"os.listdir(): {os.listdir('Instances/Instances')}")
+    #print(f"os.listdir(): {os.listdir('Instances')}")
 
     # sort instances by complexity (number of nodes * density)
     listdir = os.listdir('.')
@@ -40,11 +40,11 @@ def main():
         logger.info('inst-2-0.25.txt exists at location: ' + os.path.abspath("inst-2-0.25.txt"))
     # for file in current directory
     i = 0
-    for file in os.listdir("."):
-        i += 1
-        logger.debug(f'i: {i}')
-        logger.info(f'file: {file}')
-    # for file in os.listdir("Instances/Instances"):
+#    for file in os.listdir("."):
+#        i += 1
+#        logger.debug(f'i: {i}')
+#        logger.info(f'file: {file}')
+    for file in os.listdir("Instances/Instances"):
         # os.listdir() returns a list containing the names of the entries in the directory given by path.
         if file.startswith('inst-'):
 
