@@ -56,9 +56,11 @@
 \author{Thomas Suau, Noé Bourgeois }
 \date{March 2023}
 
-    \maketitle
-    \tableofcontents
-    \newpage
+\maketitle
+
+\tableofcontents
+ 
+ \newpage
 
     \section{Introduction}
     Le problème de flot maximum est un problème d'optimisation en théorie des graphes,
@@ -71,65 +73,54 @@
     La première méthode est la résolution à l'aide d'un programme linéaire avec le solver glpk,
     et la seconde méthode est la méthode des chemins augmentants implémentée en python3.
 
+\section{Programme linéaire}
+    
+\subsection{Formulation}
+       — la formulation utilisée en décrivant les différentes notations comme en TP.
+       Expliquez en détail pourquoi les variables, contraintes et fonction objectif du programme modélisent entièrement le
+    problème, tâchez d’avoir une formulation de qualité.
 
-    \section{Programme linéaire}
-    \subsection{Formulation}
-       — la formulation utilis´ee en d´ecrivant les diff´erentes notations comme en TP.
-       Expliquez en d´etail pourquoi les
-       variables,
+Le problème de flot maximum peut être formulé comme un programme linéaire.
+       
+Soit G=(V, A) un graphe orienté pondéré avec un nœud source s et un nœud puits t.
+Soit $f_{ij}$ la quantité de flux circulant sur l'arc $(i,j) \in A$, et $c_{ij}$ la capacité maximale de cet arc.
 
-       contraintes et
+Le problème de flot maximum peut être formulé comme suit : \\
 
-       fonction objectif du programme mod´elisent enti`erement le
-    probl`eme, tˆachez d’avoir une formulation de qualit´e.
-
-
-        Le problème de flot maximum peut être formulé comme un programme linéaire.
-       Soit G=(V, A) un graphe orienté pondéré avec un nœud source s et un nœud puits t.
-       Soit $f_{ij}$ la quantité de flux circulant sur l'arc $(i,j) \in A$,
-       et $c_{ij}$ la capacité maximale de cet arc.
-       Le problème de flot maximum peut être formulé comme suit :
-
-    Maximiser :
-
-$\sum_{(i,j) \in A} f_{ij}$
-
+Maximiser :
+$$\sum_{(i,j) \in A} f_{ij}$$
 sous les contraintes :
 
-$\sum_{(i,j) \in A} f_{ij} - \sum_{(j,i) \in A} f_{ji} =
+$$\sum_{(i,j) \in A} f_{ij} - \sum_{(j,i) \in A} f_{ji} =
 \begin{cases}
 -q & \text{si } i=s \
 q & \text{si } i=t \
 0 & \text{sinon}
-\end{cases}$
+\end{cases}$$
 
-où $q$ est le flot sortant de la source $s$
+où $q$ est le flot sortant de la source $s$.
 
-$f_{ij} \leq c_{ij}$ pour tout $(i,j) \in A$
+$$f_{ij} \leq c_{ij} ~ \forall (i,j) \in A$$
 
-$f_{ij} \geq 0$ pour tout $(i,j) \in A$
+$$f_{ij} \geq 0 ~ \forall (i,j) \in A $$
 
-Les variables $f_{ij}$ représentent le flot circulant sur l'arc $(i,j)$
-    et $c_{ij}$ est la capacité maximale de l'arc $(i,j)$.
-    Les contraintes expriment
-    la conservation de flux en chaque nœud,
-    la capacité maximale de chaque arc
-    et le fait que le flot doit être positif.
-
-   \section{Chemins augmentants}
-
-— une description de la m´ethode des chemins augmentant impl´ement´ee,
+Les variables $f_{ij}$ représentent le flot circulant sur l'arc $(i,j)$ et $c_{ij}$ est la capacité maximale de l'arc $(i,j)$.
+    
+Les contraintes expriment la conservation de flux en chaque nœud, la capacité maximale de chaque arc et le fait que le flot doit être positif.
 
 
+\section{Chemins augmentants}
+
+— une description de la méthode des chemins augmentant implémentée,
 
 
-   \section{Résultats}
-    système d’exploitation de la machine sur laquelle nous fait
-    nos tests: Windows 11
+\section{Résultats}
+    
+ On a réalisé nos tests sur le système d’exploitation : Windows 11 \& MacOS Ventura.\\
 
-— une analyse des r´esultats de la r´esolution des diff´erentes instances.
+— une analyse des résultats de la résolution des différentes instances.
    Cette analyse peut comparer les
-temps de r´esolution
+temps de résolution
    pour des instances de taille croissante
 
    pour les deux m´ethodes de r´esolution.
@@ -164,7 +155,7 @@ les instances. S´electionnez les instances afin d’ˆetre le plus complet dans
 
 
     \section{Ressources}
-    \underlined{(cf. énoncé)}
+    \underline{(cf. énoncé)}
     Rédaction scientifique:
 
     \href{http://informatique.umons.ac.be/algo/redacSci.pdf.}{http://informatique.umons.ac.be/algo/redacSci.pdf.
