@@ -127,7 +127,7 @@ if __name__ == '__main__':
     import sys
 
     if 2 < len(sys.argv):
-        if sys.argv[2] == "timed":
+        if "debug" not in sys.argv:
             # logger disable
             logger.remove()
     solve_max_flow_augmenting_paths(os.path.join(sys.argv[1]))
