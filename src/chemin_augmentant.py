@@ -73,9 +73,7 @@ def max_flow_edmonds_karp(graph, capacities, source, sink):
         total_flow += flow
     return total_flow
 
-def solve_max_flow_augmenting_paths(file_path):
-    logger.info(f'Solving max flow problem with augmenting paths for {file_path}')
-
+def read_file(file_path):
     # Read input file
     with open(file_path, 'r') as f:
         lines = f.readlines()
@@ -86,6 +84,13 @@ def solve_max_flow_augmenting_paths(file_path):
     sink = int(lines[2].split()[1])
     arcs = int(lines[3].split()[1])
     arcs_data = [tuple(map(int, line.split())) for line in lines[4:]]
+
+    return nodes, source, sink, arcs, arcs_data
+
+def solve_max_flow_augmenting_paths(file_path):
+    logger.info(f'Solving max flow problem with augmenting paths for {file_path}')
+
+    nodes, source, sink, arcs, arcs_data = read_file(file_path)
 
     # Build graph
     graph = [[] for _ in range(nodes)]
@@ -112,22 +117,33 @@ def solve_max_flow_augmenting_paths(file_path):
 
 def write_output_file_to(path, file_path, nodes, capacities, max_flow):
     if not os.path.exists(path):
+        logger.debug(f'Creating directory {path}')
         os.makedirs(path)
     with open(path + "/" + file_path.replace('Instances',
-                                            'Path').replace(
-            'inst', 'model').replace('.txt', '.path'), 'w') as f:
-        if path == "Path":
-            f.write(f'{max_flow}\n')
-            for i in range(nodes):
-                for j in range(nodes):
-                    if capacities[i][j] > 0:
-                        f.write(f'{i} {j} {capacities[i][j]}\n')
+                                             'Path').replace('inst',
+                                                             'model').replace('.txt',
+                                                                              '.path'), 'w') as f:
+        f.write(f'{max_flow}\n')
+        for i in range(nodes):
+            for j in range(nodes):
+                if capacities[i][j] > 0:
+                    f.write(f'{i} {j} {capacities[i][j]}\n')
 
 if __name__ == '__main__':
     import sys
+    # print("len(sys.argv): ", len(sys.argv))
+    if 1 == len(sys.argv):
+        print("Usage: python chemin_augmentant.py <file_path> [debug]")
+        print("Example: "
+              "python chemin_augmentant.py inst-100-0.1.txt "
+              "debug")
+        print("Result: ")
+        solve_max_flow_augmenting_paths("inst-100-0.1.txt")
+        exit(1)
 
-    if 2 < len(sys.argv):
-        if "debug" not in sys.argv:
-            # logger disable
-            logger.remove()
-    solve_max_flow_augmenting_paths(os.path.join(sys.argv[1]))
+    else:
+        if 2 < len(sys.argv):
+            if "debug" not in sys.argv:
+                # logger disable
+                logger.remove()
+        solve_max_flow_augmenting_paths(os.path.join(sys.argv[1]))
