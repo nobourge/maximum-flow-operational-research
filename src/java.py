@@ -1,7 +1,5 @@
 # https://github.com/Kawser-nerd/CLCDSA/blob/aee32551795763b54acb26856ab239370cac4e75/Source%20Codes/CodeJamData/17/04/4.java#L235
 
-
-
 # /* A Max Flow solver base class. */
 # 	public static abstract class MaxFlowSolver {
 # 		/* List of nodes, indexed. */
@@ -158,7 +156,8 @@
 # 				if (!augment) {
 # 					/*
 # 					 * RETREAT: Update d(i): = min{d(j) + 1: rij > 0 and (i, j)
-# 					 * \in A(i)}. If d(s) >= n, then STOP. Otherwise, if i = s
+# 					 * \in A(i)}. If d(s) >= n, then STOP.
+# 					 Otherwise, if i = s
 # 					 * then go to ADVANCE(i); else replace i by pred(i) and go
 # 					 * to ADVANCE(i).
 # 					 */

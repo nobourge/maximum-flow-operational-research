@@ -109,6 +109,7 @@ def distance_directed_augmenting_path(graph, capacities, source, sink):
         # flow[neighbor][source] = -capacity
         flow[neighbor][source] -= capacity
         excess_flow[neighbor] = capacity    # Set excess flow at neighbors to their capacity
+        logger.debug(f'flow: {flow}')
 
     def push_flow(u, v):
         logger.debug(f'push_flow({u}, {v})')
@@ -148,6 +149,10 @@ def distance_directed_augmenting_path(graph, capacities, source, sink):
         while excess_flow[u] > 0:
             v = 0    # Initialize the index of the neighbor to push flow to
             for i in range(nodes_quantity):
+                logger.debug(f'capacities[{u}][{i}] : {capacities[u][i]}')
+                logger.debug(f'flow[{u}][{i}] : {flow[u][i]}')
+                logger.debug(f'heights[{u}] : {heights[u]}')
+                logger.debug(f'heights[{i}] : {heights[i]}')
                 if capacities[u][i] - flow[u][i] > 0 and heights[u] == heights[i] + 1:
                     v = i    # Find a neighbor with available capacity and height difference of 1
                     # height difference must be 1 and only 1 because
@@ -171,16 +176,20 @@ def distance_directed_augmenting_path(graph, capacities, source, sink):
         for v in range(nodes_quantity):
             logger.debug(f'excess_flow[{v}]: {excess_flow[v]}')
             if excess_flow[v] > 0 and (u == -1 or distance[v] < distance[u]):
-                logger.debug(f'v: {v}')
 
                 u = v    # Find a node with excess flow and the minimum distance label
+            logger.debug(f'v: {v}')
+
         if u == -1:
             logger.debug(f'u: {u}')
             break    # If no node found, exit
-        discharge_node(u)
+        discharge_node(u) # Discharge excess flow from node u
+        # Update distance labels
         for v in range(nodes_quantity):
             if capacities[u][v] - flow[u][v] > 0:
                 distance[u] = min(distance[u], heights[v] + 1)
+                logger.debug(f'distance[{u}]: {distance[u]}')
+                # distance[v] = min(distance[v], heights[u] + 1)
 
     return sum(flow[source])
 
