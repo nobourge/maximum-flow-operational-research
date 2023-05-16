@@ -1,32 +1,36 @@
 from collections import deque
 
+from networkx import Graph
+
+
+class Node:
+    def __init__(self):
+        self.edges = []  # List of edges connected to this node
+        self.index = 0  # Index in nodes array
+        self.dist = 0  # PushRelabel, Dinic, and AhujaOrlin
+        self.mindj = 0  # AhujaOrlin
+        self.currentarc = 0  # AhujaOrlin
+        self.minCapacity = 0  # FordFulkerson, AhujaOrlin
+
+
+class Edge:
+    def __init__(self, s, d, c, f):
+        self.forward = f  # True: edge is in the original graph, False: edge is a backward edge
+        self.from_node = s  # Starting node
+        self.to_node = d  # Ending node
+        self.flow = 0  # Current flow
+        self.capacity = c  # Capacity of the edge
+        self.cost = 0  # Only used for MinCost
+
+    def remaining(self):
+        return self.capacity - self.flow  # Remaining capacity
+
+    def add_flow(self, amount):
+        self.flow += amount  # Increase flow on this edge
+
 
 class MaxFlowSolver:
-    class Node:
-        def __init__(self):
-            self.edges = []  # List of edges connected to this node
-            self.index = 0  # Index in nodes array
-            self.dist = 0  # PushRelabel, Dinic, and AhujaOrlin
-            self.mindj = 0  # AhujaOrlin
-            self.currentarc = 0  # AhujaOrlin
-            self.minCapacity = 0  # FordFulkerson, AhujaOrlin
 
-    class Edge:
-        def __init__(self, s, d, c, f):
-            self.forward = f  # True: edge is in the original graph, False: edge is a backward edge
-            self.from_node = s  # Starting node
-            self.to_node = d  # Ending node
-            self.flow = 0  # Current flow
-            self.capacity = c  # Capacity of the edge
-            self.dual = None  # Reference to this edge's dual
-            self.cost = 0  # Only used for MinCost
-
-        def remaining(self):
-            return self.capacity - self.flow  # Remaining capacity
-
-        def add_flow(self, amount):
-            self.flow += amount  # Increase flow on this edge
-            self.dual.flow -= amount  # Adjust flow on the dual edge
 
     def __init__(self, n=0):
         self.nodes = []
@@ -34,8 +38,8 @@ class MaxFlowSolver:
             self.add_node()
 
     def link(self, n1, n2, capacity, cost=1):
-        e12 = self.Edge(n1, n2, capacity, True)  # Create a forward edge
-        e21 = self.Edge(n2, n1, 0,
+        e12 = Edge(n1, n2, capacity, True)  # Create a forward edge
+        e21 = Edge(n2, n1, 0,
                         False)  # Create a dual edge with capacity 0
         e12.dual = e21
         e21.dual = e12
@@ -46,18 +50,16 @@ class MaxFlowSolver:
         e21.cost = -cost  # Set the cost of the dual edge (unused)
 
     def add_node(self):
-        n = self.Node()
+        n = Node()
         n.index = len(self.nodes)
         self.nodes.append(n)
         return n
 
-    def get_max_flow(self, src, snk):
-
-        # 			 * INITIALIZE. Perform a (reverse) breadth-first search of the
-        # 			 * residual network starting from the sink node to compute distance
-        # 			 * labels d(i).
+    def initialize(self, src, snk):
+        # INITIALIZE. Perform a (reverse) breadth-first search of the
+        # residual network starting from the sink node to compute distance
+        # labels d(i).
         n = len(self.nodes)
-        total_flow = 0
 
         # Initialize distances and other variables
         for u in self.nodes:
@@ -66,7 +68,7 @@ class MaxFlowSolver:
             u.currentarc = 0  # Initialize the current edge index
 
         count = [0] * (
-                    n + 1)  # Array to count nodes at each distance level
+                n + 1)  # Array to count nodes at each distance level
         count[0] = 1  # There is one node at distance 0 (the sink)
 
         Q = deque()
@@ -78,10 +80,11 @@ class MaxFlowSolver:
         while Q:
             x = Q.popleft()
             for e in x.edges:
-                if e.to_node.dist == -1: # If the node has not been visited
-                    e.to_node.dist = e.from_node.dist + 1 # Set its distance
-                    count[e.to_node.dist] += 1 # Increment the count for that distance
-                    Q.append(e.to_node) # Add it to the BFS queue
+                if e.to_node.dist == -1:  # If the node has not been visited
+                    e.to_node.dist = e.from_node.dist + 1  # Set its distance
+                    count[
+                        e.to_node.dist] += 1  # Increment the count for that distance
+                    Q.append(e.to_node)  # Add it to the BFS queue
 
         if src.dist == -1:
             return 0  # If the source is unreachable, return 0
@@ -92,10 +95,48 @@ class MaxFlowSolver:
                    None] * n  # Array to store the predecessors in the augmenting path
         i = src  # Start from the source node
 
+    def augment(self):
+
+    def get_max_flow(self, src, snk):
+        # INITIALIZE.
+        # Perform a (reverse) breadth-first search
+        # of the residual network
+        # starting from the sink node to compute
+        # distance labels d(i).
+        # Let P = p and i = s.
+        # Go to ADVANCE(i).
+
+        # ADVANCE(i).
+        # If the residual network contains no admissible arc (i, j),
+        # then
+        # go to RETREAT(i).
+        # If the residual network contains an admissible arc (i, j),
+        # then set pred(j): = i and P: = P U {(i,
+        # j)}. If j = t then go to AUGMENT; otherwise, replace i by j
+        # and repeat ADVANCE(i).
+
+        # RETREAT(i).
+        # Update d(i): = min{d(j) + 1: rij > 0 and (i, j) A(i)}.
+        # If d(s) - n, then STOP. Otherwise, if i = s then go to
+        # ADVANCE(i); else delete (pred(i), i) from P, replace i by
+        # pred(i) and go to ADVANCE(i).
+
+        # AUGMENT.
+        # Let 6: = min{ri: (i, j) E P}. Augment 6 units of flow along
+        # P. Set P: = i = =, s and go to ADVANCE(i)
+
+        initialize(self, src, snk)
+
+        return total_flow
+
+
+
+
         # Augment the flow until the sink is reached
         while src.dist < n:
             # If the residual network contains an admissible arc (i, j),
-            # then set pred(j) := i If j = t then go to AUGMENT; otherwise,
+            # then set pred(j) := i
+            # If j = t then go to AUGMENT; otherwise,
             # replace i by j and repeat ADVANCE(i).
             augment = False
 
@@ -150,4 +191,18 @@ class MaxFlowSolver:
                 total_flow += added_flow
                 i = src  # Start from the source node for the next iteration
 
-        return total_flow
+
+if __name__ == '__main__':
+    # Read the number of nodes and edges
+    n, m = map(int, input().split())
+
+    # Create a graph with n nodes
+    g = Graph(n)
+
+    # Read the edges
+    for _ in range(m):
+        u, v, c = map(int, input().split())
+        g.link(g.nodes[u - 1], g.nodes[v - 1], c)
+
+    # Compute the maximum flow from node 0 to node n - 1
+    print(g.get_max_flow(g.nodes[0], g.nodes[n - 1]))
