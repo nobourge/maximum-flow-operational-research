@@ -31,27 +31,23 @@ def solve_max_flow_glpk(file_path):
                                       for i, j, c in arcs_data if i == source)
             node_balance_expr_2 = sum(model.f[j, i]
                                       for j, i, c in arcs_data if j == source)
-            print(model.node_balance.items())
             contrainte = pyo.Constraint(expr=node_balance_expr_1 - node_balance_expr_2 == 0)
-            model.node_balance.add(contrainte)
+            #model.node_balance.add(contrainte)
             print('Contrainte : ', contrainte.display())
-            print(model.node_balance)
+
 
 
         elif num == sink:
-            node_balance_expr_1 = sum(model.f[i, j]
-                                      for i, j, c in arcs_data if i == sink)
-            node_balance_expr_2 = sum(model.f[j, i]
-                                      for j, i, c in arcs_data if j == sink)
+            node_balance_expr_1 = sum(model.f[i, j] for i, j, c in arcs_data if i == sink)
+            node_balance_expr_2 = sum(model.f[j, i] for j, i, c in arcs_data if j == sink)
 
-            print(model.node_balance)
+
             # model.node_balance.add(pyo.Constraint(expr=node_balance_expr_1 == node_balance_expr_2))
 
         else:
             node_balance_expr_1 = sum(model.f[i, j] for i, j, c in arcs_data if i == num)
             node_balance_expr_2 = sum(model.f[j, i] for j, i, c in arcs_data if j == num)
             # print(arcs_data)
-            print(model.node_balance)
             # model.node_balance.add(pyo.Constraint(expr=node_balance_expr_1 - node_balance_expr_2 == 0))
 
     model.arc_capacity = pyo.ConstraintList()
