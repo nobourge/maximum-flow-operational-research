@@ -73,6 +73,117 @@ def max_flow_edmonds_karp(graph, capacities, source, sink):
         total_flow += flow
     return total_flow
 
+
+def distance_directed_augmenting_path(graph, capacities, source, sink):
+    nodes_quantity = len(graph)
+    heights = [0] * nodes_quantity    # Heights of nodes in the residual graph
+    excess_flow = [0] * nodes_quantity    # Excess flow at each node
+    flow = [[0] * nodes_quantity for _ in range(nodes_quantity)]    # Flow matrix
+    distance = [0] * nodes_quantity    # Distance labels for nodes
+
+    logger.debug(f'graph: {graph}')
+    logger.debug(f'capacities: {capacities}')
+    logger.debug(f'source: {source}')
+    logger.debug(f'sink: {sink}')
+    logger.debug(f'nodes_quantity: {nodes_quantity}')
+    logger.debug(f'heights: {heights}')
+    logger.debug(f'excess_flow: {excess_flow}')
+    logger.debug(f'flow: {flow}')
+    logger.debug(f'distance: {distance}')
+
+    # Initialize source preflow
+    logger.debug(f'Initialize source preflow on graph {graph}')
+    heights[source] = nodes_quantity    # Set height of source node to the number of nodes
+    excess_flow[source] = float('inf')    # Set excess flow at source
+    # node to infinity
+    logger.debug(f'heights: {heights}')
+    logger.debug(f'excess_flow: {excess_flow}')
+
+    for neighbor in graph[source]:
+        capacity = capacities[source][neighbor]
+        logger.debug(f'neighbor: {neighbor}')
+        logger.debug(f'capacity from {source} to {neighbor}: {capacity}')
+        # if capacity > 0:
+        flow[source][neighbor] = capacity    # Initialize flow from source to its neighbors
+        # Initialize flow from neighbors to source (negative)
+        # flow[neighbor][source] = -capacity
+        flow[neighbor][source] -= capacity
+        excess_flow[neighbor] = capacity    # Set excess flow at neighbors to their capacity
+
+    def push_flow(u, v):
+        logger.debug(f'push_flow({u}, {v})')
+        logger.debug(f'flow: {flow}')
+        # Push flow from node u to node v
+        logger.debug(f'excess_flow[u]: {excess_flow[u]}')
+        logger.debug(f'capacities[u][v]: {capacities[u][v]}')
+        logger.debug(f'flow[u][v]: {flow[u][v]}')
+        delta = min(excess_flow[u], capacities[u][v] - flow[u][v])    # Compute the maximum amount of flow that can be pushed
+        logger.debug(f'delta: {delta}')
+        flow[u][v] += delta    # Increase the flow from u to v
+        flow[v][u] -= delta    # Decrease the flow from v to u (negative flow)
+        excess_flow[u] -= delta    # Update the excess flow at node u
+        excess_flow[v] += delta    # Update the excess flow at node v
+        logger.debug(f'flow: {flow}')
+
+    def relabel_node(u):
+        logger.debug(f'relabel_node({u})')
+        logger.debug(f'heights: {heights}')
+        # Relabel the height of node u to signify
+        min_height = float('inf')    # Initialize the minimum height to infinity
+        for v in range(nodes_quantity):
+            logger.debug(f'capacities[{u}][{v}] : {capacities[u][v]}')
+            logger.debug(f'flow[{u}][{v}] : {flow[u][v]}')
+            if capacities[u][v] - flow[u][v] > 0:
+                logger.debug(f'min_height: {min_height}')
+                logger.debug(f'heights[{v}] : {heights[v]}')
+
+                min_height = min(min_height, heights[v])    # Find the minimum height of neighboring nodes with available capacity
+        heights[u] = min_height + 1    # Set the new height of node u to the minimum height + 1
+        logger.debug(f'heights: {heights}')
+
+    def discharge_node(u):
+        logger.debug(f'discharge_node({u})')
+        # Discharge excess flow from node u
+        logger.debug(f'excess_flow[{u}]: {excess_flow[u]}')
+        while excess_flow[u] > 0:
+            v = 0    # Initialize the index of the neighbor to push flow to
+            for i in range(nodes_quantity):
+                if capacities[u][i] - flow[u][i] > 0 and heights[u] == heights[i] + 1:
+                    v = i    # Find a neighbor with available capacity and height difference of 1
+                    # height difference must be 1 and only 1 because
+                    # todo
+                    break
+            if v > 0:
+                push_flow(u, v)    # Push flow from node u to node v
+            else:
+                relabel_node(u)    # If no valid neighbor found, relabel the height of node u and break the loop
+
+    # Initialize distance labels
+    for v in range(nodes_quantity):
+        distance[v] = heights[v]    # Set the distance label of each node equal to its height
+        logger.debug(f'distance[{v}]: {distance[v]}')
+
+    # Main loop
+    while excess_flow[source] > 0:
+        logger.debug(f'excess_flow[{source}]: {excess_flow[source]} '
+                     f'still greater than 0, continue')
+        u = -1    # Initialize the index of the node to discharge
+        for v in range(nodes_quantity):
+            logger.debug(f'excess_flow[{v}]: {excess_flow[v]}')
+            if excess_flow[v] > 0 and (u == -1 or distance[v] < distance[u]):
+                logger.debug(f'v: {v}')
+
+                u = v    # Find a node with excess flow and the minimum distance label
+        if u == -1:
+            logger.debug(f'u: {u}')
+            break    # If no node found, exit
+        discharge_node(u)
+        for v in range(nodes_quantity):
+            if capacities[u][v] - flow[u][v] > 0:
+                distance[u] = min(distance[u], heights[v] + 1)
+
+    return sum(flow[source])
+
 def read_file(file_path):
     # Read input file
     with open(file_path, 'r') as f:
@@ -87,8 +198,9 @@ def read_file(file_path):
 
     return nodes, source, sink, arcs, arcs_data
 
-def solve_max_flow_augmenting_paths(file_path):
+def solve_max_flow_augmenting_paths(file_path, algorithm):
     logger.info(f'Solving max flow problem with augmenting paths for {file_path}')
+    logger.info(f'Algorithm: {algorithm}')
 
     nodes, source, sink, arcs, arcs_data = read_file(file_path)
 
@@ -106,7 +218,16 @@ def solve_max_flow_augmenting_paths(file_path):
     # GraphVisualizer(graph).draw()
 
     # Compute max flow
-    max_flow = max_flow_edmonds_karp(graph, capacities, source, sink)
+    max_flow = 0
+    if algorithm == 'edmonds_karp':
+        max_flow = max_flow_edmonds_karp(graph, capacities, source, sink)
+    elif algorithm == 'distance':
+        max_flow = distance_directed_augmenting_path(graph, capacities, source, sink)
+    # elif algorithm == 'bfs':
+    #     max_flow = bfs_directed_augmenting_path(graph, capacities, source, sink)
+    # elif algorithm == 'dfs':
+    #     max_flow = dfs_directed_augmenting_path(graph, capacities, source, sink)
+
     print(f'Max flow: {max_flow}')
 
     # Write output file
@@ -133,12 +254,12 @@ if __name__ == '__main__':
     import sys
     # print("len(sys.argv): ", len(sys.argv))
     if 1 == len(sys.argv):
-        print("Usage: python chemin_augmentant.py <file_path> [debug]")
+        print("Usage: python chemin_augmentant.py <file_path> <algorithm>")
         print("Example: "
-              "python chemin_augmentant.py inst-100-0.1.txt "
-              "debug")
+              "python chemin_augmentant.py inst-100-0.1.txt distance")
         print("Result: ")
-        solve_max_flow_augmenting_paths("inst-100-0.1.txt")
+        # solve_max_flow_augmenting_paths("inst-100-0.1.txt", "distance")
+        solve_max_flow_augmenting_paths("inst-2-0.25.txt", "distance")
         exit(1)
 
     else:
@@ -146,4 +267,5 @@ if __name__ == '__main__':
             if "debug" not in sys.argv:
                 # logger disable
                 logger.remove()
-        solve_max_flow_augmenting_paths(os.path.join(sys.argv[1]))
+        solve_max_flow_augmenting_paths(os.path.join(sys.argv[1]), sys.argv[2])
+# test
