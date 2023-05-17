@@ -68,21 +68,19 @@ def solve_max_flow_glpk(file_path):
     arcs_data = [tuple(map(int, line.split())) for line in lines[4:]]
 
     # Separate arc twins from arcs data
-    print(arcs_data)
     arcs_data, arcs_twins = separate_arc_twins(arcs_data)
-    print(arcs_data)
 
     # Get arcs outgoing from the source
     arcs_source = [arc for arc in arcs_data if arc[0] == source]
     arcs_source, arcs_twins_source = separate_arc_twins(arcs_source)
-
+    print(arcs_twins_source)
     # Create the maximization objective
 
     maximization = f'maximize\nv : f_{arcs_source[0][0]}_{arcs_source[0][1]}'
     for arc in arcs_twins_source:
         maximization += f' + f_{arc[0]}_{arc[1]}_{arc[2]}'
-    for arc in arcs_source:
-        maximization += f' + f_{arc[0]}_{arc[1]}'
+    for index in range(1, len(arcs_source)):
+        maximization += f' + f_{arcs_source[index][0]}_{arcs_source[index][1]}'
     # Create the constraints
     constraints = 'subject to\n'
     constraint_index = 1
@@ -99,7 +97,7 @@ def solve_max_flow_glpk(file_path):
         if node != source and node != sink:
             # Get arcs connected to the node
             arcs_node = [arc for arc in arcs_data if arc[0] == node or arc[1] == node]
-            arcs_twins_node, arcs_node = separate_arc_twins(arcs_node)
+            arcs_node, arcs_twins_node = separate_arc_twins(arcs_node)
 
             constraints += f'c{constraint_index}: '
             for arc in arcs_node:
@@ -113,27 +111,28 @@ def solve_max_flow_glpk(file_path):
             constraints += f' = 0\n'
             constraint_index += 1
 
-            constraints += f'c{constraint_index}: '
-            for arc in arcs_twins_node:
-                if arc[0] == node:
-                    if constraints[-2:] == ': ':
-                        constraints += f'f_{arc[1]}_{arc[0]}_{arc[2]} '
+            if len(arcs_twins_node)>0:
+                constraints += f'c{constraint_index}: '
+                for arc in arcs_twins_node:
+                    if arc[0] == node:
+                        if constraints[-2:] == ': ':
+                            constraints += f'f_{arc[1]}_{arc[0]}_{arc[2]} '
+                        else:
+                            constraints += f' + f_{arc[1]}_{arc[0]}_{arc[2]} '
                     else:
-                        constraints += f' + f_{arc[1]}_{arc[0]}_{arc[2]} '
-                else:
-                    constraints += f'- f_{arc[1]}_{arc[0]}_{arc[2]}'
-                constraints += f' = 0\n'
-                constraint_index += 1
+                        constraints += f'- f_{arc[1]}_{arc[0]}_{arc[2]}'
+                    constraints += f' = 0\n'
+                    constraint_index += 1
 
     # Create integer variables
-    integer = 'integer'
+    integer = 'integer \n'
     for arc in arcs_twins_source:
-        integer += f'f_{arc[1]}_{arc[0]}_{arc[2]}'
+        integer += f'f_{arc[1]}_{arc[0]}_{arc[2]} \n'
     for arc in arcs_source:
-        integer += f'f_{arc[0]}_{arc[1]}'
+        integer += f'f_{arc[0]}_{arc[1]} \n'
 
     # Write to a new file
-    model = f' \n {constraints} \n {integer} \n end'
+    model = maximization + '\n\n' + constraints + '\n' + integer + '\n' + ' end'
     print(model)
 
     with open(file_path.replace('.txt', '.lp'), 'w') as f:
