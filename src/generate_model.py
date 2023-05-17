@@ -1,4 +1,28 @@
-import pyomo.environ as pyo
+import sys
+
+
+def clean_file(file_path):
+    # Read input file
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    # Supprimer les lignes avec le même noeud de départ et d'arrivée
+    for index in range(4, len(lines)):
+        lines[index] = lines[index].split()
+        if lines[index][0] == lines[index][1]:
+            lines[index] = ''
+        else:
+            lines[index] = ' '.join(lines[index]) + '\n'
+
+
+    # Supprime les doublons à partir de la ligne 5
+    unique_lines = lines[:4]  # Copie les 4 premières lignes
+    unique_lines.extend(list(set(lines[4:])))  # Supprime les doublons et ajoute à la liste
+
+
+    # Ecrit le nouveau fichier
+    with open(file_path, 'w') as f:
+        f.writelines(unique_lines)
 
 
 def solve_max_flow_glpk(file_path):
@@ -13,66 +37,53 @@ def solve_max_flow_glpk(file_path):
     arcs = int(lines[3].split()[1])
     arcs_data = [tuple(map(int, line.split())) for line in lines[4:]]
 
-    # Create model
-    model = pyo.AbstractModel()
-
-    # Define variables
-    model.f = pyo.Var([(i, j) for i, j, c in arcs_data], within=pyo.NonNegativeReals)
-
-    # Define objective
-    model.obj = pyo.Objective(expr=pyo.summation(model.f), sense=pyo.maximize)
-
-    # Define constraints
-    model.node_balance = pyo.ConstraintList()
-
-    for num in range(1, nodes + 1):
-        if num == source:
-            node_balance_expr_1 = sum(model.f[i, j]
-                                      for i, j, c in arcs_data if i == source)
-            node_balance_expr_2 = sum(model.f[j, i]
-                                      for j, i, c in arcs_data if j == source)
-            contrainte = pyo.Constraint(expr=node_balance_expr_1 - node_balance_expr_2 == 0)
-            #model.node_balance.add(contrainte)
-            print('Contrainte : ', contrainte.display())
+    # On liste les arcs sortants de la source
+    arcs_source = [arc for arc in arcs_data if arc[0] == source]
 
 
+    # On crée la condition de maximisation
+    maximization = f'maximize \n v : f_{arcs_source[0][0]}_{arcs_source[0][1]}'
+    for index in range(1, len(arcs_source)):
+        maximization += f' + f_{arcs_source[index][0]}_{arcs_source[index][1]}'
+    # Vérification condition maximization
+    #print(maximization)
 
-        elif num == sink:
-            node_balance_expr_1 = sum(model.f[i, j] for i, j, c in arcs_data if i == sink)
-            node_balance_expr_2 = sum(model.f[j, i] for j, i, c in arcs_data if j == sink)
+    # On crée les contraintes
+    contraintes = f'subject to \n'
+    contraintes_index = 1
+    # On crée les contraintes liées aux capacités des arcs
+    for arc in arcs_data:
+        contraintes += f'c{contraintes_index} : f_{arc[0]}_{arc[1]} <= {arc[2]} \n'
+        contraintes_index += 1
+    # On crée les contraintes de conservation de flot
+    for node in (node for node in range(1, nodes) if node != source and node != sink):
+        contraintes += f'c{contraintes_index} : '
+        # On construit la somme des flots entrants pour node
+        for arc in arcs_data:
+            if arc[0] == node:
+                if contraintes[-2:] == ': ':
+                    contraintes += f'f_{arc[0]}_{arc[1]} '
+                else:
+                    contraintes += f'+ f_{arc[0]}_{arc[1]} '
+            if arc[1] == node:
+                contraintes += f'- f_{arc[0]}_{arc[1]} '
+        # On crée la partie droite de la contrainte
+        contraintes += '= 0 \n'
+        contraintes_index += 1
+    contraintes += '\n'
 
-
-            # model.node_balance.add(pyo.Constraint(expr=node_balance_expr_1 == node_balance_expr_2))
-
-        else:
-            node_balance_expr_1 = sum(model.f[i, j] for i, j, c in arcs_data if i == num)
-            node_balance_expr_2 = sum(model.f[j, i] for j, i, c in arcs_data if j == num)
-            # print(arcs_data)
-            # model.node_balance.add(pyo.Constraint(expr=node_balance_expr_1 - node_balance_expr_2 == 0))
-
-    model.arc_capacity = pyo.ConstraintList()
-    for i, j, c in arcs_data:
-        model.arc_capacity.add(model.f[i, j] <= c)
-
-    # Solve model
-    solver = pyo.SolverFactory('glpk')
-    solver.solve(model)
-
-    # Print solution
-    print('Maximum flow:', pyo.value(model.obj))
-    print('Flow on arcs:')
-    for i, j, c in arcs_data:
-        print(f'f({i}, {j}) = {pyo.value(model.f[i, j])}')
-
-    # Write solution to file
-    with open(file_path.replace('.txt', '.sol'), 'w') as f:
-        f.write(f'{pyo.value(model.obj)}\n')
-        for i, j, c in arcs_data:
-            f.write(f'{i} {j} {pyo.value(model.f[i, j])}\n')
-
-    # Write model to file
-    with open(file_path.replace('.txt', '.lp'), 'w') as f:
-        model.pprint(ostream=f)
+    # On crée les integer
+    integer = f'integer \n'
+    for arc in arcs_source:
+        integer += f'f_{arc[0]}_{arc[1]} \n'
 
 
-solve_max_flow_glpk('./inst-300-0.3.txt')
+    # Modèle à résoudre
+    model = maximization + '\n' + contraintes + integer + '\n' + 'end'
+    print(model)
+
+
+
+file = sys.argv[1]
+clean_file(file)
+solve_max_flow_glpk(file)
