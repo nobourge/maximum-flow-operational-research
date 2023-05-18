@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass{article}[12pt]
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[french]{babel}
@@ -18,6 +18,8 @@
 \usepackage{verbatim}
 \usepackage{graphicx}
 \usepackage{comment}
+\usepackage{enumitem}
+\frenchbsetup{StandardLists=true}
 
 \usepackage{natbib}
 \usepackage{url}
@@ -53,83 +55,128 @@
 \begin{document}
 
 \title{Flot Maximum}
+\subtitle{Projet d'algorithme et recherche opérationnelle 2023}
 \author{Thomas Suau, Noé Bourgeois }
 \date{March 2023}
 
 \maketitle
 
+ \newpage
+
 \tableofcontents
  
  \newpage
 
-    \section{Introduction}
-    Le problème de flot maximum est un problème d'optimisation en théorie des graphes,
-    qui consiste à trouver le flot maximum qu'il est possible d'envoyer d'un nœud source à un nœud puits
-    dans un graphe pondéré orienté où les arcs ont des capacités maximales.
+\section{Introduction}
 
-    Dans ce rapport, nous allons présenter deux méthodes
-    pour résoudre le problème de flot maximum.
-    La première méthode est la résolution à l'aide d'un programme linéaire avec le solver glpk,
-    et la seconde méthode est la méthode des chemins augmentants implémentée en python3.
+\subsection{Présentation du problème}
+    Le problème de flot maximum est un problème d'optimisation en théorie des graphes, qui consiste à trouver le flot maximum qu'il est possible d'envoyer d'un nœud source à un nœud puits dans un graphe pondéré orienté où les arcs ont des capacités maximales. On en donne une expression ci-dessous \ref{math_intro}.\\
     
-    Dans notre problème les instances sont présentées sous la forme : 
-    nodes
-    ,mkds
-    SLLSLS
+    Dans ce rapport, nous allons présenter deux méthodes pour résoudre le problème de flot maximum.
+    La première méthode est la résolution à l'aide d'un programme linéaire avec le solver glpk, et la seconde méthode est la méthode des chemins augmentants implémentée en python3.
     
+    Dans notre problème les instances sont présentées sous la forme : \\
+	\begin{lslisting} % Remplacer par algpseudocode qui marche
+		nodes n (nombre de noeuds)\\
+		source u (numéro de la source)\\
+		sink v (numéro du puit)\\
+		arcs a (nombre d’arcs)\\
+		i j c (présence d’un arc $(i,j)$ et capacité $c_{i,j}$ associée)
+		
+	\end{lslisting}
+\subsection{Outils mathématiques \label{math_intro}}
+
+    Soit $G = (A,N,C)$ un graphe, $s$ sa source, $t$ son puit et dont chaque arc $(i,j)$ est pondéré par sa {\it capacité} $c_{i,j} \in C$ .\\ 
+    La capacité pourrait être n'importe quel nombre réel positif mais dans ce cours on se concentre sur des capacités entières.\\
+       
+    On appelle {\it flot} sur $G$ tout vecteur $(f_{i,j})_{(i,j) \in A}$ vérifiant les deux conditions : \\
+    \begin{enumerate}[label=\roman*)]
+    	\item $0 \leq f_{i,j} \leq c_{i,j}, ~ \forall (i,j) \in A$ ; \\
+	\item  (conservation du flot) $$ ~ \sum_{j : (i,j) \in A} f_{i,j} = \sum_{j : (j,i) \in A} f_{j,i}, ~ \forall i \in N \setminus {(s,t)}$$ \\
+    \end{enumerate}
+    
+    On appelle {\it flot maximal} (ou {\it flot max}) un vecteur $(f_{i,j})_{(i,j)\in A}$ tel que pour tout autre flot $(f'_{i,j})_{(i,j)\in A}$, $f'_{i,j} \leq f_{i,j}$ pour tout $(i,j) \in A$.\\
+    
+    {\bf Proposition 1} : Pour tout graphe $G$ fini il existe un flot max. \\
+    
+    {\it Démonstration} : On chercher à prouver L'existence d'un plus grand élément de $\mathcal{F} = \lbrace (f_{i,j})_{(i,j) \in A} | f \text{est un flot} \rbrace$. D'abord, on voit que $\mathcal{F}$ n'est pas vide car le vecteur $(0)_{(i,j) \in A}$ est dans $\mathcal{F}$.\\
+    On remarque que $\mathcal{F}$ est fini car $\mathcal{F} \subset \times_{(i,j)\in A} \lbrace 0,...,c_{i,j}$ et $c_{i,j} \in C$ est fini pour tout $(i,j) \in A$. Or tout ensemble fini admet un plus grand et un plus petit élément au sens de l'inclusion. \qed
+
+{\bf Proposition 2} : Pour tout flot $f \in \mathcal{F}$ dans $G$, on a l'égalité : $$ \sum_{j : (s,j) \in A} f_{s,j} = -\sum_{i : (i,t) \in A} f_{i,t}. $$    
+    
+    {\it Démonstration} : Par principe de conservation du flot $\sum_{j : (i,j) \in A} f_{i,j} = \sum_{j : (j,i) \in A} f_{j,i}$ pour $i \ne s$. Mais en particulier $f_{s,i} - \sum_{j : (i,j) \in A} f_{i,j} = 0$. % A terminer car je trouve que f_{s,i} = f_{t,j} et non pas - f_{t,j}
+    
+     
+    On appelle {\it valeur du flot} $f$, notée $v(f)$, l'élément : $$v(f) = \sum_{(s,j) \in A} f_{s,j} = -\sum_{(i,t) \in A} f_{i,t}$$
+    Par le principe de conservation du flot cette valeur existe. Quand on cherche le flot max, on notera simplement $v$ la valeur de flot recherchée. 
+
 
 \section{Programme linéaire}
     
 \subsection{Formulation}
 
-On souhaite calculer le flot maximal 
+On souhaite calculer le flot maximal via la méthode linéaire en utilisant le solveur \texttt{glpsol}.
 
-
-On définit la {\it valeur du flot} v comme la somme
-Tout d'abord nous nous appuyons sur le cours qui nous donne la formulation du problème du flot maximal 
-Le problème de flot maximum peut être formulé comme un programme linéaire.
-       
-Soit G=(V, A) un graphe orienté pondéré avec un nœud source s et un nœud puits t.
-Soit $f_{ij}$ la quantité de flux circulant sur l'arc $(i,j) \in A$, et $c_{ij}$ la capacité maximale de cet arc.
+On cherche donc à maximiser $v$ définit dans \ref{math_intro}.
+Avec les notations de l'introduction soit $f_{i,j}$ la quantité de flot circulant sur l'arc $(i,j) \in A$, et $c_{i,j}$ la capacité maximale de cet arc.
 
 Le problème de flot maximum peut être formulé comme suit : \\
-
 Maximiser :
-$$\sum_{(i,j) \in A} f_{ij}$$
+$$\sum_{(s,j) \in A} f_{s,j}$$
 sous les contraintes :
-
 $$\sum_{(i,j) \in A} f_{ij} - \sum_{(j,i) \in A} f_{ji} =
 \begin{cases}
--q & \text{si } i=s \\
-q & \text{si } i=t \\
+-v & \text{si } i=s \\
+v & \text{si } i=t \\
 0 & \text{sinon}
 \end{cases}$$
-
-où $q$ est le flot sortant de la source $s$.
-
 
 $$f_{ij} \leq c_{ij} ~ \forall (i,j) \in A$$
 
 $$f_{ij} \geq 0 ~ \forall (i,j) \in A $$
 
-Les variables $f_{ij}$ représentent le flot circulant sur l'arc $(i,j)$ et $c_{ij}$ est la capacité maximale de l'arc $(i,j)$.
-    
-Les contraintes expriment la conservation de flux en chaque nœud, la capacité maximale de chaque arc et le fait que le flot doit être positif.
+Cette formulation caractérise entièrement notre problème car par la proposition 1, un flot max existe et s'il existe il doit alors vérifier la proposition 2 ; qui nous assure alors que c'est cet élément $\sum_{(s,j) \in A} f_{s,j}$ que l'on doit maximiser. \\
+Les contraintes proviennent des conditions pour $f$ d'être un flot.\\
+
+\subsection{Algorithme}
+
+On a considéré des{\it arcs jumeaux} comme étant les arcs ayant même noeud de départ et d'arrivée mais avec des capacités différentes\\
+Ainsi, on a notée le flot associé à ces arcs : $f\_i\_j\_c_{ij}$ pour chaque capacité. On ne néglige ainsi aucun arc dans notre résolution mais cela augmente le nombre de variables.\\
+
+{\bf Structure du code } : \\
+Il y a un dossier \texttt{Linear} qui contient le fichier \texttt{generate\_model.py}. \\
+Les instances se trouvent dans \texttt{./src/Instances/Instances} et \texttt{generate\_model.py} produit les modèles dans \texttt{./src/Instances/model}.
+On lance alors depuis le dossier \texttt{src} : 
+% Afficher du code bash
+\texttt{python3 Linear/generate\_model.py Instances/Instances/inst-100-0.1.txt}
+Cela crée le fichier \texttt{Instances/Models/model-100-0.1.lp}.\\
+ Afin de résoudre ceci on exécute la commande : \\
+ \textt{glpsol - -lp Instances/Models/model-100-0.1.lp -o Instances/Solutions/model-100-0.1.sol}
 
 
 \section{Chemins augmentants}
 
-— une description de la méthode des chemins augmentant implémentée,
+— une description de la méthode des chemins augmentant implémentée
 
+Plusieurs algorithme on été choisit et testé.
+
+{\bf Ford-Fulkerson} : \\
+
+Cette algorithme consiste à partir du flot nul $(0)_{(i,j) \in A}$ puis prendre un $st$-chemin, i.e. un chemin de $s$ à $t$.
+On sature le $st$-chemin avec le minimum de la capacité sur le chemin choisit.\\
+Ensuite, on ... % A terminer  
+
+{\bf } : \\
+
+{\bf } : \\
 
 \section{Résultats}
     
  On a réalisé nos tests sur le système d’exploitation : Windows 11 \& MacOS Ventura.\\
 
 — une analyse des résultats de la résolution des différentes instances.
-   Cette analyse peut comparer les
-temps de résolution
-   pour des instances de taille croissante
+
+
 
    pour les deux m´ethodes de r´esolution.
 
@@ -159,22 +206,26 @@ les instances. S´electionnez les instances afin d’ˆetre le plus complet dans
 
 
     \newpage
+    
+    
+\begin{thebibliography}{99}
+
+\bibitem{bibtex}{\href{https://www.bibtex.com/}{bibtex}} 
+
+\bibitem{copilot}{L'écriture du code a été accélérée à l'aide du plugin \href{https://copilot.github.com/}{Github Copilot}}
+
+\bibitem{redaction-sci}{\href{http://informatique.umons.ac.be/algo/redacSci.pdf}{Rédaction scientifique}}
 
 
+    
 
-    \section{Ressources}
-    \underline{(cf. énoncé)}
-    Rédaction scientifique:
 
-    \href{http://informatique.umons.ac.be/algo/redacSci.pdf.}{http://informatique.umons.ac.be/algo/redacSci.pdf.
-    }
+\end{thebibliography}
 
-    Ressources bibliographiques:
 
-    \href{https://www.bibtex.com/.}{https://www.bibtex.com/.}
+    
 
-    L'écriture du code a été accélérée à l'aide du plugin "Github Copilot"
-    \href{https://copilot.github.com/}{https://copilot.github.com/}
+    
 
 
 \end{document}
