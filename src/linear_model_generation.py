@@ -1,5 +1,9 @@
 import os
 import sys
+import time
+import subprocess
+from loguru import logger
+
 
 def clean_file(file_path):
     # Read input file
@@ -14,11 +18,9 @@ def clean_file(file_path):
         else:
             lines[index] = ' '.join(lines[index]) + '\n'
 
-
     # Supprime les doublons à partir de la ligne 5
     unique_lines = lines[:4]  # Copie les 4 premières lignes
     unique_lines.extend(list(set(lines[4:])))  # Supprime les doublons et ajoute à la liste
-
 
     # Ecrit le nouveau fichier
     with open(file_path, 'w') as f:
@@ -54,6 +56,7 @@ def get_outgoing_arcs(node, arcs_data):
         if arc[0] == node or arc[1] == node:
             outgoing_arcs.append(arc)
     return outgoing_arcs
+
 
 def solve_max_flow_glpk(file_path):
     # Read input file
@@ -111,7 +114,7 @@ def solve_max_flow_glpk(file_path):
             constraints += f' = 0\n'
             constraint_index += 1
 
-            if len(arcs_twins_node)>0:
+            if len(arcs_twins_node) > 0:
                 constraints += f'c{constraint_index}: '
                 for arc in arcs_twins_node:
                     if arc[0] == node:
@@ -135,8 +138,9 @@ def solve_max_flow_glpk(file_path):
     model = maximization + '\n\n' + constraints + '\n' + integer + '\n' + ' end'
     print(model)
 
-    with open(file_path.replace('.txt', '.lp'), 'w') as f:
-        f.write(model)
+    return model
 
-file = sys.argv[1]
-solve_max_flow_glpk(file)
+if __name__ == '__main__':
+    file = sys.argv[1]
+    clean_file(file)
+    solve_max_flow_glpk(file)
