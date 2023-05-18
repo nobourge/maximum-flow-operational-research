@@ -65,21 +65,28 @@
     \section{Introduction}
     Le problème de flot maximum est un problème d'optimisation en théorie des graphes,
     qui consiste à trouver le flot maximum qu'il est possible d'envoyer d'un nœud source à un nœud puits
-    dans un graphe pondéré orienté,
-    où les arcs ont des capacités maximales.
+    dans un graphe pondéré orienté où les arcs ont des capacités maximales.
 
     Dans ce rapport, nous allons présenter deux méthodes
     pour résoudre le problème de flot maximum.
     La première méthode est la résolution à l'aide d'un programme linéaire avec le solver glpk,
     et la seconde méthode est la méthode des chemins augmentants implémentée en python3.
+    
+    Dans notre problème les instances sont présentées sous la forme : 
+    nodes
+    ,mkds
+    SLLSLS
+    
 
 \section{Programme linéaire}
     
 \subsection{Formulation}
-       — la formulation utilisée en décrivant les différentes notations comme en TP.
-       Expliquez en détail pourquoi les variables, contraintes et fonction objectif du programme modélisent entièrement le
-    problème, tâchez d’avoir une formulation de qualité.
 
+On souhaite calculer le flot maximal 
+
+
+On définit la {\it valeur du flot} v comme la somme
+Tout d'abord nous nous appuyons sur le cours qui nous donne la formulation du problème du flot maximal 
 Le problème de flot maximum peut être formulé comme un programme linéaire.
        
 Soit G=(V, A) un graphe orienté pondéré avec un nœud source s et un nœud puits t.
@@ -93,12 +100,13 @@ sous les contraintes :
 
 $$\sum_{(i,j) \in A} f_{ij} - \sum_{(j,i) \in A} f_{ji} =
 \begin{cases}
--q & \text{si } i=s \
-q & \text{si } i=t \
+-q & \text{si } i=s \\
+q & \text{si } i=t \\
 0 & \text{sinon}
 \end{cases}$$
 
 où $q$ est le flot sortant de la source $s$.
+
 
 $$f_{ij} \leq c_{ij} ~ \forall (i,j) \in A$$
 
