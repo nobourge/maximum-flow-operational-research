@@ -43,7 +43,7 @@
 # 			this(0);
 # 		}
 #
-# 		public abstract long getMaxFlow(Node src, Node snk);
+# 		public abstract long getMaxFlow(Node src, Node sink);
 #
 # 		/* Add a new node. */
 # 		public Node addNode() {
@@ -77,7 +77,7 @@
 # 		}
 #
 # 		@Override
-# 		public long getMaxFlow(Node src, Node snk) {
+# 		public long getMaxFlow(Node src, Node sink) {
 # 			/**
 # 			 * INITIALIZE. Perform a (reverse) breadth-first search of the
 # 			 * residual network starting from the sink node to compute distance
@@ -97,8 +97,8 @@
 #
 # 			Node[] Q = new Node[n]; // (Q, head, tail) are used as BFS queue
 # 			int head = 0, tail = 0;
-# 			snk.dist = 0;
-# 			Q[tail++] = snk;
+# 			sink.dist = 0;
+# 			Q[tail++] = sink;
 # 			while (head < tail) {
 # 				Node x = Q[head++];
 # 				for (Edge e : x.edges) {
@@ -114,13 +114,13 @@
 # 				return 0;
 #
 # 			src.minCapacity = Long.MAX_VALUE;
-# 			Edge[] pred = new Edge[n]; // current augmenting path
+# 			Edge[] predecessors = new Edge[n]; // current augmenting path
 # 			Node i = src; // i is the 'tip' of the augmenting path as in paper
 #
 # 			advance: while (src.dist < n) { // If d(s) >= n, then STOP.
 # 				/*
 # 				 * If the residual network contains an admissible arc (i, j),
-# 				 * then set pred(j) := i If j = t then go to AUGMENT; otherwise,
+# 				 * then set predecessors(j) := i If j = t then go to AUGMENT; otherwise,
 # 				 * replace i by j and repeat ADVANCE(i).
 # 				 */
 # 				boolean augment = false;
@@ -139,9 +139,9 @@
 # 					 * 1
 # 					 */
 # 					if (i.dist == j.dist + 1) {
-# 						pred[j.index] = e;
+# 						predecessors[j.index] = e;
 # 						j.minCapacity = min(i.minCapacity, e.remaining());
-# 						if (j == snk) {
+# 						if (j == sink) {
 # 							augment = true;
 # 							break;
 # 						} else {
@@ -150,7 +150,7 @@
 # 						}
 # 					}
 # 				}
-# 				// either ran out of admissible edges, or reached snk and thus
+# 				// either ran out of admissible edges, or reached sink and thus
 # 				// are ready to augment
 #
 # 				if (!augment) {
@@ -158,7 +158,7 @@
 # 					 * RETREAT: Update d(i): = min{d(j) + 1: rij > 0 and (i, j)
 # 					 * \in A(i)}. If d(s) >= n, then STOP.
 # 					 Otherwise, if i = s
-# 					 * then go to ADVANCE(i); else replace i by pred(i) and go
+# 					 * then go to ADVANCE(i); else replace i by predecessors(i) and go
 # 					 * to ADVANCE(i).
 # 					 */
 #
@@ -176,15 +176,15 @@
 # 					i.mindj = n;
 #
 # 					if (i != src)
-# 						i = pred[i.index].from;
+# 						i = predecessors[i.index].from;
 # 				} else {
 # 					/*
 # 					 * AUGMENT. Let sigma: = min{ri: (i, j) \in P}. Augment
 # 					 * sigma units of flow along P. Set i = s and go to
 # 					 * ADVANCE(i).
 # 					 */
-# 					long addedFlow = snk.minCapacity;
-# 					for (Edge edge = pred[snk.index]; edge != null; edge = pred[edge.dual.to.index]) {
+# 					long addedFlow = sink.minCapacity;
+# 					for (Edge edge = predecessors[sink.index]; edge != null; edge = predecessors[edge.dual.to.index]) {
 # 						edge.addFlow(addedFlow);
 # 					}
 # 					totalFlow += addedFlow;

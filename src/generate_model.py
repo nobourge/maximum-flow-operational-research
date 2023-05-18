@@ -20,11 +20,11 @@ import pyomo.environ as pyo
 from loguru import logger
 
 def solve_max_flow_glpk(file_path):
-    # Read input file
+    # Read input origin_file
     with open(file_path, 'r') as f:
         lines = f.readlines()
 
-    # Parse input file
+    # Parse input origin_file
     nodes = int(lines[0].split()[1])
     source = int(lines[1].split()[1])
     sink = int(lines[2].split()[1])
@@ -78,13 +78,13 @@ def solve_max_flow_glpk(file_path):
     for i, j, c in arcs_data:
         print(f'f({i}, {j}) = {pyo.value(model.f[i, j])}')
 
-    # Write solution to file
+    # Write solution to origin_file
     with open(file_path.replace('.txt', '.sol'), 'w') as f:
         f.write(f'{pyo.value(model.obj)}\n')
         for i, j, c in arcs_data:
             f.write(f'{i} {j} {pyo.value(model.f[i, j])}\n')
 
-    # Write model to file
+    # Write model to origin_file
     with open(file_path.replace('.txt', '.lp'), 'w') as f:
         model.pprint(ostream=f)
 

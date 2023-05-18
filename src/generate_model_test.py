@@ -1,6 +1,6 @@
 # runs generate_model.py on every instance
 # via the command python3 generate_model.py inst-n-p.txt
-# must generate a file model-n-p.lp.
+# must generate a origin_file model-n-p.lp.
 
 import os
 import subprocess
