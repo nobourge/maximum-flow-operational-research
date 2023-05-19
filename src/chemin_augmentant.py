@@ -6,8 +6,11 @@
 # et qui la stock dans un fichier model-n-p.path
 import os
 from collections import deque
+from timeit import timeit
 
+import numpy as np
 from loguru import logger
+from line_profiler_pycharm import profile
 
 def check_minimum_cut(graph, capacities, source, sink, total_flow):
     ###
@@ -17,7 +20,7 @@ def check_minimum_cut(graph, capacities, source, sink, total_flow):
     # equal to the capacity of the min-cut.
     # here
     ###
-    logger.debug(f'check_minimum_cut(graph, capacities, {source}, {sink}, {total_flow})')
+    # logger.debug(f'check_minimum_cut(graph, capacities, {source}, {sink}, {total_flow})')
 
     # find all nodes reachable from source
     queue = deque([source])
@@ -29,14 +32,13 @@ def check_minimum_cut(graph, capacities, source, sink, total_flow):
             if capacity > 0 and neighbor not in visited:
                 queue.append(neighbor)
     reachable_nodes = visited
-    logger.info(f"reachable_nodes: {reachable_nodes}")
+    # logger.info(f"reachable_nodes: {reachable_nodes}")
 
     # find all edges with one node in reachable_nodes and the other not
     min_cut_capacity = 0
     for node in reachable_nodes:
         for neighbor in graph[node]:
             if neighbor not in reachable_nodes:
-                # min_cut_capacity += capacities[node][neighbor]
                 min_cut_capacity += capacities[neighbor][node]
 
     logger.info(f"total_flow: {total_flow}")
@@ -46,102 +48,160 @@ def check_minimum_cut(graph, capacities, source, sink, total_flow):
     else:
         logger.info("The solution is not optimal.")
 
+def update(capacities, current_node, neighbor, quantity):
+    logger.debug(f'update(capacities, {current_node}, {neighbor}, {quantity})')
 
-def find_augmenting_path(flow, capacities, source, sink):
-    logger.debug(f'find_augmenting_path(graph, capacities, {source}, {sink})')
+    logger.info(f'Updating capacities[{current_node}][{neighbor}] from '
+                f'{capacities[current_node][neighbor]} to '
+                f'{capacities[current_node][neighbor] - quantity}')
+    capacities[current_node][neighbor] -= quantity
+
+    logger.info(f'Updating capacities[{neighbor}][{current_node}] from '
+                f'{capacities[neighbor][current_node]} to '
+                f'{capacities[neighbor][current_node] + quantity}')
+    capacities[neighbor][current_node] += quantity
+
+
+
+@profile
+def find_augmenting_path(graph, flow, capacities, source, sink):
+    # logger.debug(f'find_augmenting_path(graph, capacities, {source}, {sink})')
     # Recherche d'un chemin augmentant dans le graphe
     queue = deque([source])
     visited = set()
     parent = {}
+    # path = [source]
     found_path = False
 
     # Parcours en largeur jusqu'à trouver le puits ou épuiser tous les chemins
     while queue and not found_path:
-        logger.debug(f'queue: {queue}')
-        logger.debug(f'visited: {visited}')
+        # logger.debug(f'path: {path}')
+        # logger.debug(f'parent: {parent}')
+        # logger.debug(f'queue: {queue}')
+        # logger.debug(f'visited: {visited}')
         current = queue.popleft()
-        logger.debug(f'current: {current}')
+        # current = queue.pop()
+        # logger.debug(f'current: {current}')
         visited.add(current)
-        logger.debug("capacities:", capacities)
-        for neighbor, capacity in enumerate(capacities[current]):
-            logger.debug(f'capacities[current]: {capacities[current]}')
-            logger.debug(f'neighbor: {neighbor}')
-            logger.debug(f'capacity: {capacity}')
+        # logger.debug(f"capacities: {capacities}")
+        # logger.debug(f"capacities[current]: {capacities[current]}")
+
+        # logger.debug(f"capacities[current] reversed: {list(reversed(capacities[current]))}")
+
+        # added_current_to_path = False
+        # for neighbor, capacity in enumerate(capacities[current]):
+        for neighbor in graph[current]:
+
             # todo : choose max capacity neighbor
-            if capacity > 0 and neighbor not in visited:
+            if capacities[current][neighbor] > 0 and neighbor not in \
+                    visited:
+                # logger.debug(
+                #     f'capacities[current]: {capacities[current]}')
+                # logger.debug(f'neighbor: {neighbor}')
+                # logger.debug(f'capacity: {capacity}')
                 parent[neighbor] = current
+                # logger.debug(f'parent[{neighbor}] = {current}')
+                # if path[-1] != current:
+                #     path.append(current)
+                #     added_current_to_path = True
+                #     logger.debug(f'path: {path}')
                 if neighbor == sink:
+                    # path.append(neighbor)
+                    # added_current_to_path = True
+
                     found_path = True
+                    # logger.debug(f'found_path: {found_path}')
+                    # logger.debug(f'path: {path}')
                     break
                 queue.append(neighbor)
+                # logger.debug(f'queue: {queue}')
+        # if not added_current_to_path and current != path[-1]:
+        #     path.pop()
+        #     logger.debug(f'path: {path}')
 
     # Si un chemin augmentant a été trouvé, le construire et renvoyer son flux maximum
     if found_path:
-        path = [sink]
+        parent_path = [sink]
         current = sink
+        # logger.debug(f'current: {current}')
+        # logger.debug(f'parent: {parent}')
         while current != source:
             current = parent[current]
-            path.append(current)
+            parent_path.append(current)
+            # logger.debug(f'current: {current}')
+            # logger.debug(f'parent_path: {parent_path}')
         # Le chemin est construit à l'envers, le retourner
-        path.reverse()
-        logger.debug(f'Augmenting path: {path}')
+        path = list(reversed(parent_path))
+        # path = reversed(parent_path)
+        # logger.debug(f'Augmenting path: {path}')
         # max_flow est le minimum des capacités des arcs du chemin
         path_flow = min(capacities[path[i]][path[i+1]] for i in range(len(path)-1))
-        logger.debug(f'Max flow: {path_flow}')
+        # logger.debug(f'path flow: {path_flow}')
         for i in range(len(path)-1):
-            logger.debug(f'Updating flow[{path[i]}][{path[i+1]}] from '
-                            f'{flow[path[i]][path[i+1]]} to '
-                            f'{flow[path[i]][path[i+1]] + path_flow}')
+            # logger.debug(f'Updating flow[{path[i]}][{path[i+1]}] from '
+            #                 f'{flow[path[i]][path[i+1]]} to '
+            #                 f'{flow[path[i]][path[i+1]] + path_flow}')
             flow[path[i]][path[i+1]] += path_flow
-            logger.debug(f'Updating capacities[{path[i]}][{path[i+1]}] from '
-                         f'{capacities[path[i]][path[i+1]]} to '
-                         f'{capacities[path[i]][path[i+1]] - path_flow}')
-            capacities[path[i]][path[i+1]] -= path_flow
-            logger.debug(f'Updating capacities[{path[i+1]}][{path[i]}] from '
-                            f'{capacities[path[i+1]][path[i]]} to '
-                            f'{capacities[path[i+1]][path[i]] + path_flow}')
-            capacities[path[i+1]][path[i]] += path_flow
-        logger.debug(f'New capacities: {capacities}')
+
+            update(capacities, path[i], path[i+1], path_flow)
+        # logger.debug(f'New capacities: {capacities}')
         return path_flow
 
     # Sinon, renvoyer 0 pour indiquer que le flot maximum a été atteint
     else:
         return 0
 
-def edmonds_karp(graph, capacities, source, sink, flow):
+@profile
+def edmonds_karp(graph, capacities, source, sink, flow,
+                 nodes_quantity, arcs_quantity):
     # Trouver un chemin augmentant jusqu'à ce qu'il n'y en ait plus
     total_flow = 0
     optimal = False
     while not optimal:
-        path_flow = find_augmenting_path(flow, capacities, source, sink)
+        path_flow = find_augmenting_path(graph, flow, capacities,
+                                         source, sink)
         if path_flow == 0:
-            logger.debug("flow == 0")
-            logger.info("No more augmenting paths.")
+            # logger.debug("flow == 0")
+            # logger.info("No more augmenting paths.")
             break
         total_flow += path_flow
         optimal = check_minimum_cut(graph, capacities, source, sink, total_flow)
     return total_flow
 
-def push_relabel(graph, capacities, source, sink):
+def push_relabel(graph, capacities, source, sink, flow, nodes_quantity, arcs_quantity):
     # Initialize preflow
-    heights = [0] * len(graph)    # Heights of nodes in the residual graph
-    excess_flow = [0] * len(graph)    # Excess flow at each node
-    flow = [[0] * len(graph) for _ in range(len(graph))]    # Flow matrix
-    for edge in graph[source]:
-        excess_flow[edge.to_node] = edge.capacity
-        capacities[source][edge.to_node] -= edge.capacity
-        capacities[edge.to_node][source] += edge.capacity
-        flow[source][edge.to_node] = edge.capacity
-        flow[edge.to_node][source] = -edge.capacity
+    excess_flow = np.zeros(nodes_quantity)
+    for neighbor in graph[source]:
+        source_to_neighbor_capacity = capacities[source][neighbor]
+        logger.debug(f'Updating excess_flow[{neighbor}] from '
+                     f'{excess_flow[neighbor]} to '
+                     f'{excess_flow[neighbor] + source_to_neighbor_capacity}')
+        excess_flow[neighbor] = source_to_neighbor_capacity
+
+        logger.debug(f'Updating capacities[{source}][{neighbor}] from '
+                     f'{capacities[source][neighbor]} to '
+                     f'{capacities[source][neighbor] - source_to_neighbor_capacity}')
+        capacities[source][neighbor] -= source_to_neighbor_capacity
+
+        logger.debug(f'source_to_neighbor_capacity: {source_to_neighbor_capacity}')
+        capacities[neighbor][source] += source_to_neighbor_capacity
+        flow[source][neighbor] = source_to_neighbor_capacity
+        flow[neighbor][source] = -source_to_neighbor_capacity
 
     # Initialize distance labels
-    distance = [0] * len(graph)    # Distance labels for nodes
-    queue = deque([node for node in graph if node != source and node != sink])
+    distance = [0] * nodes_quantity    # Distance labels for nodes
+    if source == 0 and sink == nodes_quantity-1:
+        queue = deque([node for node in range(source+1,
+                                              sink-1)])
+    else:
+        logger.warning("Source and sink are not the first and last nodes.")
+        queue = deque(
+            [node for node in graph if node != source and node != sink])
     while queue:
         current = queue.popleft()
         distance[current] = min(distance[neighbor] + 1 for neighbor, capacity in enumerate(capacities[current])
                                 if capacity > 0)
-    distance[source] = len(graph)
+    distance[source] = nodes_quantity
 
     # Main loop
     while True:
@@ -152,28 +212,29 @@ def push_relabel(graph, capacities, source, sink):
                 current = node
                 break
         if current is None:
+            logger.info("No node with excess flow found.")
             break
 
         # Push flow to a neighbor
         pushed = False
         for neighbor, capacity in enumerate(capacities[current]):
             if capacity > 0 and distance[current] == distance[neighbor] + 1:
-                pushed = True
                 flow_to_push = min(excess_flow[current], capacity)
                 logger.debug(f'Pushing {flow_to_push} from {current} to {neighbor}')
-                capacities[current][neighbor] -= flow_to_push
-                capacities[neighbor][current] += flow_to_push
-                flow[current][neighbor] += flow_to_push
-                flow[neighbor][current] -= flow_to_push
+                update(capacities, current, neighbor, flow_to_push)
+                update(flow, neighbor, current, flow_to_push)
                 excess_flow[current] -= flow_to_push
                 excess_flow[neighbor] += flow_to_push
+                pushed = True
                 break
 
         # If no push was possible, relabel the node
         if not pushed:
-            logger.debug(f'Relabeling {current}')
+            logger.debug(f'Relabeling {current} from '
+                         f'{distance[current]} to')
             distance[current] = min(distance[neighbor] + 1 for neighbor, capacity in enumerate(capacities[current])
                                     if capacity > 0)
+            logger.debug(f' {distance[current]}')
 
     return sum(flow[source])
 
@@ -311,54 +372,66 @@ def read_file(file_path):
     return nodes_quantity, source, sink, arcs_quantity, arcs_data
 
 def solve_max_flow_augmenting_paths(file_path, algorithm=None):
-    logger.info(f'Solving max flow problem with augmenting paths for {file_path}')
-    logger.info(f'Algorithm: {algorithm}')
+    # logger.info(f'Solving max flow problem with augmenting paths for {file_path}')
+    # logger.info(f'Algorithm: {algorithm}')
 
     nodes_quantity, source, sink, arcs_quantity, arcs_data = read_file(file_path)
 
-    # Build graph
+    # Initialize graph and capacities matrices
     graph = [[] for _ in range(nodes_quantity)]
-    # capacities[i][j] = capacity of the arc from i to j
-    capacities = [[0 for _ in range(nodes_quantity)] for _ in range(nodes_quantity)]
-    flow = [[0 for _ in range(nodes_quantity)] for _ in range(nodes_quantity)]
+    capacities = np.zeros((nodes_quantity, nodes_quantity))
+    flow = np.zeros((nodes_quantity, nodes_quantity), dtype=int)
+
     for arc in arcs_data:
+        # Add arcs to the graph
         graph[arc[0]].append(arc[1])
         graph[arc[1]].append(arc[0])
-        capacities[arc[0]][arc[1]] = arc[2]
-    logger.debug(f'graph: {graph}')
-    logger.debug(f'capacities: {capacities}')
+
+        # Set capacity value in the capacities matrix
+        capacities[arc[0], arc[1]] = arc[2]
+
+    # logger.debug(f'graph: {graph}')
+    # logger.debug(f'capacities: {capacities}')
 
     # GraphVisualizer(graph).draw()
 
     # Compute max flow
-    max_flow = 0
     if algorithm == 'edmonds_karp':
-        max_flow = edmonds_karp(graph, capacities, source, sink)
+        max_flow = edmonds_karp(graph, capacities, source, sink,
+                                flow, nodes_quantity, arcs_quantity)
     elif algorithm == 'distance':
-        max_flow = distance_directed_augmenting_path(graph, capacities, source, sink)
+        max_flow = distance_directed_augmenting_path(graph,
+                                                     capacities,
+                                                     source, sink,
+                                                     nodes_quantity, arcs_quantity)
 
     else:
         if nodes_quantity < arcs_quantity:
             # dense graph
             algorithm = 'push_relabel'
-            max_flow = push_relabel(graph, capacities, source, sink)
+            max_flow = push_relabel(graph, capacities, source, sink,
+                                    flow, nodes_quantity, arcs_quantity)
         else:
             # sparse graph
             algorithm = 'edmonds_karp'
-            max_flow = edmonds_karp(graph, capacities, source, sink, flow)
+            max_flow = edmonds_karp(graph, capacities, source, sink,
+                                    flow, nodes_quantity, arcs_quantity)
+    max_flow = int(max_flow)
     logger.info(f'Max flow: {max_flow}')
+    print(f'file_path: {file_path}')
+    print(f'Max flow: {max_flow}')
 
     # solution_graph = [[] for _ in range(nodes_quantity)]
     # for i in range(nodes_quantity):
 
     # Write output origin_file
-    write_output_file_to(".", file_path, nodes_quantity, capacities,
-                         max_flow, flow)
-    write_output_file_to(algorithm, file_path, nodes_quantity,
-                         capacities, max_flow, flow)
+    # write_output_file_to(".", file_path, nodes_quantity, capacities,
+    #                      max_flow, flow)
+    # write_output_file_to(algorithm, file_path, nodes_quantity,
+    #                      capacities, max_flow, flow)
 
 
-
+@profile
 def write_output_file_to(path, file_path, nodes, capacities, max_flow, flow):
     logger.info(f'Writing output origin_file to {path}')
     logger.debug(f'file_path: {file_path}')
@@ -373,10 +446,12 @@ def write_output_file_to(path, file_path, nodes, capacities, max_flow, flow):
                                              'Path').replace('inst',
                                                              'model').replace('.txt',
                                                                               '.path'), 'w') as f:
+        logger.info(f'{max_flow}\n')
         f.write(f'{max_flow}\n')
         for i in range(nodes):
             for j in range(nodes):
                 if flow[i][j] > 0:
+                    logger.info(f'{i} {j} {flow[i][j]}\n')
                     f.write(f'{i} {j} {flow[i][j]}\n')
 
 if __name__ == '__main__':
@@ -384,16 +459,20 @@ if __name__ == '__main__':
 
     log_option = False
 
-    # print("len(sys.argv): ", len(sys.argv))
     if 1 == len(sys.argv):
         print("Usage: python chemin_augmentant.py file_path <algorithm>")
-        # instance = "inst-2-0.25.txt"
-        instance = "inst-3-0.2.txt"
+        instance = "inst-2-0.25.txt"
+        # instance = "inst-3-0.2.txt"
+        # instance = "inst-3-0.22.txt"
+        # instance = "inst-3-0.3.txt"
+        # instance = "inst-4-0.25.txt"
         # instance = "inst-100-0.1.txt"
-        # algorithm = "distance"
-        # algorithm = "edmonds_karp"
+
         algorithm = None
-        log_option = True
+        # algorithm = "distance"
+        algorithm = "edmonds_karp"
+        # log_option = True
+        log_option = False
         # print("Example: "
         #       "python chemin_augmentant.py {0} {1}".format(instance,
         #                                                    algorithm))
@@ -407,9 +486,9 @@ if __name__ == '__main__':
             if "debug" in sys.argv:
                 log_option = True
 
+    logger.info(f'instance: {instance}')
     if not log_option:
         logger.info("logger debug mode disabled")
         logger.remove()
 
-    print("instance: ", instance)
     solve_max_flow_augmenting_paths(instance, algorithm)

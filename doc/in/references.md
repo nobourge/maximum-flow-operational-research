@@ -3,7 +3,10 @@
 ### [Wikipedia](https://en.wikipedia.org/wiki/Maximum_flow_problem)
 ## algorithm
 ### Ford-Fulkerson
+[Wikipedia](https://en.wikipedia.org/wiki/Ford%E2%80%93Fulkerson_algorithm)
+
 ### Edmonds-Karp
+[Wikipedia](https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm)
 ### Dinic
 ### Preflow-Push - Push-Relabel
 [Wikipedia](https://en.wikipedia.org/wiki/Push%E2%80%93relabel_maximum_flow_algorithm)
