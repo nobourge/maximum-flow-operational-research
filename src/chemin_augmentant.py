@@ -20,7 +20,7 @@ def check_minimum_cut(graph, capacities, source, sink, total_flow):
     # equal to the capacity of the min-cut.
     # here
     ###
-    # logger.debug(f'check_minimum_cut(graph, capacities, {source}, {sink}, {total_flow})')
+    # logger.debug(f'check_minimum_cut(graph, values_matrix, {source}, {sink}, {total_flow})')
 
     # find all nodes reachable from source
     queue = deque([source])
@@ -48,24 +48,24 @@ def check_minimum_cut(graph, capacities, source, sink, total_flow):
     else:
         logger.info("The solution is not optimal.")
 
-def update(capacities, current_node, neighbor, quantity):
+def update(values_matrix, current_node, neighbor, quantity):
     logger.debug(f'update(capacities, {current_node}, {neighbor}, {quantity})')
 
     logger.info(f'Updating capacities[{current_node}][{neighbor}] from '
-                f'{capacities[current_node][neighbor]} to '
-                f'{capacities[current_node][neighbor] - quantity}')
-    capacities[current_node][neighbor] -= quantity
+                f'{values_matrix[current_node][neighbor]} to '
+                f'{values_matrix[current_node][neighbor] - quantity}')
+    values_matrix[current_node][neighbor] -= quantity
 
     logger.info(f'Updating capacities[{neighbor}][{current_node}] from '
-                f'{capacities[neighbor][current_node]} to '
-                f'{capacities[neighbor][current_node] + quantity}')
-    capacities[neighbor][current_node] += quantity
+                f'{values_matrix[neighbor][current_node]} to '
+                f'{values_matrix[neighbor][current_node] + quantity}')
+    values_matrix[neighbor][current_node] += quantity
 
 
 
 @profile
 def find_augmenting_path(graph, flow, capacities, source, sink):
-    # logger.debug(f'find_augmenting_path(graph, capacities, {source}, {sink})')
+    # logger.debug(f'find_augmenting_path(graph, values_matrix, {source}, {sink})')
     # Recherche d'un chemin augmentant dans le graphe
     queue = deque([source])
     visited = set()
@@ -83,20 +83,20 @@ def find_augmenting_path(graph, flow, capacities, source, sink):
         # current = queue.pop()
         # logger.debug(f'current: {current}')
         visited.add(current)
-        # logger.debug(f"capacities: {capacities}")
-        # logger.debug(f"capacities[current]: {capacities[current]}")
+        # logger.debug(f"values_matrix: {values_matrix}")
+        # logger.debug(f"values_matrix[current]: {values_matrix[current]}")
 
-        # logger.debug(f"capacities[current] reversed: {list(reversed(capacities[current]))}")
+        # logger.debug(f"values_matrix[current] reversed: {list(reversed(values_matrix[current]))}")
 
         # added_current_to_path = False
-        # for neighbor, capacity in enumerate(capacities[current]):
+        # for neighbor, capacity in enumerate(values_matrix[current]):
         for neighbor in graph[current]:
 
             # todo : choose max capacity neighbor
             if capacities[current][neighbor] > 0 and neighbor not in \
                     visited:
                 # logger.debug(
-                #     f'capacities[current]: {capacities[current]}')
+                #     f'values_matrix[current]: {values_matrix[current]}')
                 # logger.debug(f'neighbor: {neighbor}')
                 # logger.debug(f'capacity: {capacity}')
                 parent[neighbor] = current
@@ -132,7 +132,6 @@ def find_augmenting_path(graph, flow, capacities, source, sink):
             # logger.debug(f'parent_path: {parent_path}')
         # Le chemin est construit à l'envers, le retourner
         path = list(reversed(parent_path))
-        # path = reversed(parent_path)
         # logger.debug(f'Augmenting path: {path}')
         # max_flow est le minimum des capacités des arcs du chemin
         path_flow = min(capacities[path[i]][path[i+1]] for i in range(len(path)-1))
@@ -144,7 +143,7 @@ def find_augmenting_path(graph, flow, capacities, source, sink):
             flow[path[i]][path[i+1]] += path_flow
 
             update(capacities, path[i], path[i+1], path_flow)
-        # logger.debug(f'New capacities: {capacities}')
+        # logger.debug(f'New values_matrix: {values_matrix}')
         return path_flow
 
     # Sinon, renvoyer 0 pour indiquer que le flot maximum a été atteint
@@ -178,15 +177,8 @@ def push_relabel(graph, capacities, source, sink, flow, nodes_quantity, arcs_qua
                      f'{excess_flow[neighbor] + source_to_neighbor_capacity}')
         excess_flow[neighbor] = source_to_neighbor_capacity
 
-        logger.debug(f'Updating capacities[{source}][{neighbor}] from '
-                     f'{capacities[source][neighbor]} to '
-                     f'{capacities[source][neighbor] - source_to_neighbor_capacity}')
-        capacities[source][neighbor] -= source_to_neighbor_capacity
-
-        logger.debug(f'source_to_neighbor_capacity: {source_to_neighbor_capacity}')
-        capacities[neighbor][source] += source_to_neighbor_capacity
-        flow[source][neighbor] = source_to_neighbor_capacity
-        flow[neighbor][source] = -source_to_neighbor_capacity
+        update(capacities, source, neighbor, source_to_neighbor_capacity)
+        update(flow, source, neighbor, source_to_neighbor_capacity)
 
     # Initialize distance labels
     distance = [0] * nodes_quantity    # Distance labels for nodes
@@ -238,6 +230,66 @@ def push_relabel(graph, capacities, source, sink, flow, nodes_quantity, arcs_qua
 
     return sum(flow[source])
 
+def relabel_to_front(C, source: int, sink: int) -> int:
+    # logger.debug(f'Capacity matrix: {C}')
+    # logger.info("Relabel to front algorithm")
+    n = len(C)  # C is the capacity matrix
+    F = [[0] * n for _ in range(n)]
+    # residual capacity from u to v is C[u][v] - F[u][v]
+
+    height = [0] * n  # height of node
+    excess = [0] * n  # flow into node minus flow from node
+    seen   = [0] * n  # neighbours seen since last relabel
+    # node "queue"
+    nodelist = [i for i in range(n) if i != source and i != sink]
+
+    def push(u, v):
+        send = min(excess[u], C[u][v] - F[u][v])
+        F[u][v] += send
+        F[v][u] -= send
+        excess[u] -= send
+        excess[v] += send
+
+    def relabel(u):
+        # Find smallest new height making a push possible,
+        # if such a push is possible at all.
+        min_height = float('inf')
+        for v in range(n):
+            if C[u][v] - F[u][v] > 0:
+                min_height = min(min_height, height[v])
+                height[u] = min_height + 1
+
+    def discharge(u):
+        while excess[u] > 0:
+            if seen[u] < n:  # check next neighbour
+                v = seen[u]
+                if C[u][v] - F[u][v] > 0 and height[u] > height[v]:
+                    push(u, v)
+                else:
+                    seen[u] += 1
+            else:  # we have checked all neighbours. must relabel
+                relabel(u)
+                seen[u] = 0
+
+    height[source] = n  # longest path from source to sink is less than n long
+    excess[source] = float('inf')  # send as much flow as possible to
+    # neighbours
+    # of source
+    for v in range(n):
+        push(source, v)
+
+    p = 0
+    while p < len(nodelist):
+        u = nodelist[p]
+        old_height = height[u]
+        discharge(u)
+        if height[u] > old_height:
+            nodelist.insert(0, nodelist.pop(p))  # move to front of list
+            p = 0  # start from front of list
+        else:
+            p += 1
+
+    return sum(F[source])
 def distance_directed_augmenting_path(graph, capacities, source, sink):
     nodes_quantity = len(graph)
     heights = [0] * nodes_quantity    # Heights of nodes in the residual graph
@@ -377,7 +429,7 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
 
     nodes_quantity, source, sink, arcs_quantity, arcs_data = read_file(file_path)
 
-    # Initialize graph and capacities matrices
+    # Initialize graph and values_matrix matrices
     graph = [[] for _ in range(nodes_quantity)]
     capacities = np.zeros((nodes_quantity, nodes_quantity))
     flow = np.zeros((nodes_quantity, nodes_quantity), dtype=int)
@@ -387,15 +439,18 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
         graph[arc[0]].append(arc[1])
         graph[arc[1]].append(arc[0])
 
-        # Set capacity value in the capacities matrix
+        # Set capacity value in the values_matrix matrix
         capacities[arc[0], arc[1]] = arc[2]
 
     # logger.debug(f'graph: {graph}')
-    # logger.debug(f'capacities: {capacities}')
+    # logger.debug(f'values_matrix: {values_matrix}')
 
     # GraphVisualizer(graph).draw()
 
     # Compute max flow
+    if algorithm == 'ford_fulkerson':
+        # max_flow = ford_fulkerson(graph, capacities, source, sink)
+        pass
     if algorithm == 'edmonds_karp':
         max_flow = edmonds_karp(graph, capacities, source, sink,
                                 flow, nodes_quantity, arcs_quantity)
@@ -404,13 +459,31 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
                                                      capacities,
                                                      source, sink,
                                                      nodes_quantity, arcs_quantity)
+    elif algorithm == 'push_relabel':
+        max_flow = push_relabel(graph, capacities, source, sink,
+                                flow, nodes_quantity, arcs_quantity)
+    elif algorithm == 'relabel_to_front':
+        max_flow = relabel_to_front(
+            # graph
+            capacities
+            , source
+            , sink
+            # , flow
+            # , nodes_quantity
+            # , arcs_quantity
+        )
 
     else:
         if nodes_quantity < arcs_quantity:
             # dense graph
             algorithm = 'push_relabel'
-            max_flow = push_relabel(graph, capacities, source, sink,
-                                    flow, nodes_quantity, arcs_quantity)
+            # max_flow = push_relabel(graph, capacities, source, sink,
+            #                         flow, nodes_quantity, arcs_quantity)
+            max_flow = relabel_to_front(
+                capacities
+                , source
+                , sink
+            )
         else:
             # sparse graph
             algorithm = 'edmonds_karp'
@@ -425,10 +498,10 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
     # for i in range(nodes_quantity):
 
     # Write output origin_file
-    # write_output_file_to(".", file_path, nodes_quantity, capacities,
+    # write_output_file_to(".", file_path, nodes_quantity, values_matrix,
     #                      max_flow, flow)
     # write_output_file_to(algorithm, file_path, nodes_quantity,
-    #                      capacities, max_flow, flow)
+    #                      values_matrix, max_flow, flow)
 
 
 @profile
@@ -467,17 +540,20 @@ if __name__ == '__main__':
         # instance = "inst-3-0.3.txt"
         # instance = "inst-4-0.25.txt"
         # instance = "inst-100-0.1.txt"
+        instance = "inst-500-0.1.txt"
 
         algorithm = None
         # algorithm = "distance"
-        algorithm = "edmonds_karp"
-        # log_option = True
-        log_option = False
+        # algorithm = "edmonds_karp"
+        algorithm = "relabel_to_front"
+        log_option = True
+        # log_option = False
         # print("Example: "
         #       "python chemin_augmentant.py {0} {1}".format(instance,
         #                                                    algorithm))
         print("Example: "
-              "python chemin_augmentant.py {0}".format(instance))
+              "python chemin_augmentant.py {0} {1}".format(instance,
+                                                           algorithm))
         print("Result: ")
 
     elif 2 < len(sys.argv):
