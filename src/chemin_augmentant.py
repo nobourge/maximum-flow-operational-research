@@ -90,8 +90,8 @@ def find_augmenting_path(graph, flow, capacities, source, sink):
 
         # added_current_to_path = False
         # for neighbor, capacity in enumerate(values_matrix[current]):
-        for neighbor in graph[current]:
-
+        # for neighbor in graph[current]:
+        for neighbor in capacities[current]:
             # todo : choose max capacity neighbor
             if capacities[current][neighbor] > 0 and neighbor not in \
                     visited:
@@ -137,9 +137,11 @@ def find_augmenting_path(graph, flow, capacities, source, sink):
         path_flow = min(capacities[path[i]][path[i+1]] for i in range(len(path)-1))
         # logger.debug(f'path flow: {path_flow}')
         for i in range(len(path)-1):
-            # logger.debug(f'Updating flow[{path[i]}][{path[i+1]}] from '
-            #                 f'{flow[path[i]][path[i+1]]} to '
-            #                 f'{flow[path[i]][path[i+1]] + path_flow}')
+            # if flow[path[i]].get(path[i+1]) is None:
+            #     flow[path[i]][path[i+1]] = 0
+            logger.debug(f'Updating flow[{path[i]}][{path[i+1]}] from '
+                            f'{flow[path[i]][path[i+1]]} to '
+                            f'{flow[path[i]][path[i+1]] + path_flow}')
             flow[path[i]][path[i+1]] += path_flow
 
             update(capacities, path[i], path[i+1], path_flow)
@@ -230,12 +232,13 @@ def push_relabel(graph, capacities, source, sink, flow, nodes_quantity, arcs_qua
 
     return sum(flow[source])
 
-def relabel_to_front(C, source: int, sink: int) -> int:
+def relabel_to_front(C, source: int, sink: int, nodes_quantity) -> int:
     # logger.debug(f'Capacity matrix: {C}')
     # logger.info("Relabel to front algorithm")
-    n = len(C)  # C is the capacity matrix
+    # n = len(C)  # C is the capacity matrix
+    n = nodes_quantity  # C is the capacity matrix
     F = [[0] * n for _ in range(n)]
-    # residual capacity from u to v is C[u][v] - F[u][v]
+    # residual capacity from node_to_discharge to v is C[node_to_discharge][v] - F[node_to_discharge][v]
 
     height = [0] * n  # height of node
     excess = [0] * n  # flow into node minus flow from node
@@ -244,46 +247,101 @@ def relabel_to_front(C, source: int, sink: int) -> int:
     nodelist = [i for i in range(n) if i != source and i != sink]
 
     def push(u, v):
-        send = min(excess[u], C[u][v] - F[u][v])
+        logger.debug(f'Pushing {u} to {v}')
+        logger.debug(f'excess[{u}] = {excess[u]}')
+        # logger.debug(f'C[{node_to_discharge}][{v}] = {C[node_to_discharge][v]}')
+        logger.debug(f'F[{u}][{v}] = {F[u][v]}')
+        # logger.debug(f'C[{node_to_discharge}][{v}] = {C[node_to_discharge][v]}')
+
+        capacity = C[u][v]
+        # if node_to_discharge != v:
+        #     capacity = C[node_to_discharge][v]
+        # else:
+        #     capacity = 0
+        send = min(excess[u], capacity - F[u][v])
+        logger.debug(f'send = {send}')
+        logger.debug(f'Updating F[{u}][{v}] from '
+                     f'{F[u][v]} to '
+                     f'{F[u][v] + send}')
         F[u][v] += send
         F[v][u] -= send
         excess[u] -= send
+        logger.debug(f'excess[{u}] = {excess[u]}')
         excess[v] += send
 
-    def relabel(u):
+
+    def relabel(u, neighbors_quantity, neighbor_keys):
+        logger.debug(f'Relabeling {u}')
         # Find smallest new height making a push possible,
         # if such a push is possible at all.
         min_height = float('inf')
-        for v in range(n):
+        # for v in range(n):
+        for v in neighbor_keys:
             if C[u][v] - F[u][v] > 0:
                 min_height = min(min_height, height[v])
-                height[u] = min_height + 1
+                # height[u] = min_height + 1
+        height[u] = min_height + 1
+        logger.debug(f'height[{u}] = {height[u]}')
 
-    def discharge(u):
-        while excess[u] > 0:
-            if seen[u] < n:  # check next neighbour
-                v = seen[u]
-                if C[u][v] - F[u][v] > 0 and height[u] > height[v]:
-                    push(u, v)
+    def discharge(node_to_discharge):
+        logger.debug(f'Discharging {node_to_discharge}')
+        # neighbor_keys = [key for key, value in C[node_to_discharge].items() if value > 0]
+        neighbor_keys = [key for key, value in C[
+            node_to_discharge].items()]
+        logger.debug(f'Neighbours of {node_to_discharge}: {neighbor_keys}')
+        neighbor_quantity = len(neighbor_keys)
+        while excess[node_to_discharge] > 0:
+            logger.debug(f'Excess[{node_to_discharge}] = {excess[node_to_discharge]}')
+            logger.debug(f'Seen[{node_to_discharge}] = {seen[node_to_discharge]}')
+            if seen[node_to_discharge] < neighbor_quantity:
+                # check next neighbour
+                v = seen[node_to_discharge]
+                v = neighbor_keys[v]
+                logger.debug(f'Checking neighbour {v}')
+                # if node_to_discharge != v:
+
+                logger.debug(f'C[{node_to_discharge}][{v}] = {C[node_to_discharge][v]}')
+                logger.debug(f'F[{node_to_discharge}][{v}] = {F[node_to_discharge][v]}')
+                logger.debug(f'height[{node_to_discharge}] = {height[node_to_discharge]}')
+                logger.debug(f'height[{v}] = {height[v]}')
+                if C[node_to_discharge][v] - F[
+                    node_to_discharge][v]\
+                        > \
+                        0 and height[node_to_discharge] > height[v]:
+                    push(node_to_discharge, v)
                 else:
-                    seen[u] += 1
+                    seen[node_to_discharge] += 1
             else:  # we have checked all neighbours. must relabel
-                relabel(u)
-                seen[u] = 0
+                relabel(node_to_discharge, neighbor_quantity, neighbor_keys)
+                seen[node_to_discharge] = 0
 
     height[source] = n  # longest path from source to sink is less than n long
     excess[source] = float('inf')  # send as much flow as possible to
     # neighbours
     # of source
-    for v in range(n):
-        push(source, v)
+
+    # for v in range(n):
+    #     push(source, v)
+
+    if source == 0:
+        for neighbor in C[source]:
+            logger.debug(f'Pushing {source} to {neighbor}')
+            push(source, neighbor)
+    else:
+        logger.warning(f'source = {source}')
+        for v in range(n): # n is the number of nodes
+            if C[source][v] > 0:
+                logger.debug(f'Pushing {source} to {v}')
+                push(source, v)
 
     p = 0
+    # while there is excess flow at any non-sink node
     while p < len(nodelist):
         u = nodelist[p]
         old_height = height[u]
         discharge(u)
         if height[u] > old_height:
+            # node_to_discharge was relabeled
             nodelist.insert(0, nodelist.pop(p))  # move to front of list
             p = 0  # start from front of list
         else:
@@ -431,16 +489,41 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
 
     # Initialize graph and values_matrix matrices
     graph = [[] for _ in range(nodes_quantity)]
-    capacities = np.zeros((nodes_quantity, nodes_quantity))
-    flow = np.zeros((nodes_quantity, nodes_quantity), dtype=int)
+    # capacities = np.zeros((nodes_quantity, nodes_quantity))
+    # flow = np.zeros((nodes_quantity, nodes_quantity), dtype=int)
+    capacities = {}
+    flow = {}
 
     for arc in arcs_data:
-        # Add arcs to the graph
-        graph[arc[0]].append(arc[1])
-        graph[arc[1]].append(arc[0])
+        # # Add arcs to the graph
+        # graph[arc[0]].append(arc[1])
+        # graph[arc[1]].append(arc[0])
+        # capacities[arc[0]][arc[1]] = arc[2]
 
-        # Set capacity value in the values_matrix matrix
-        capacities[arc[0], arc[1]] = arc[2]
+
+        # Set capacity value in the capacities dictionary
+        if arc[0] not in capacities:
+            capacities[arc[0]] = {}
+        capacities[arc[0]][arc[1]] = arc[2]
+
+        # # If the graph is undirected, you can add the reverse arc as well
+        if arc[1] not in capacities:
+            capacities[arc[1]] = {}
+        if capacities[arc[1]].get(arc[0]) is None:
+            capacities[arc[1]][arc[0]] = 0
+
+        # Set flow value in the flow dictionary
+            # Set initial flow value in the flow dictionary
+            if arc[0] not in flow:
+                flow[arc[0]] = {}
+            if arc[1] not in flow[arc[0]]:
+                flow[arc[0]][arc[1]] = 0
+
+            # If the graph is undirected, you can add the reverse arc as well
+            if arc[1] not in flow:
+                flow[arc[1]] = {}
+            if arc[0] not in flow[arc[1]]:
+                flow[arc[1]][arc[0]] = 0
 
     # logger.debug(f'graph: {graph}')
     # logger.debug(f'values_matrix: {values_matrix}')
@@ -469,7 +552,7 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
             , source
             , sink
             # , flow
-            # , nodes_quantity
+            , nodes_quantity
             # , arcs_quantity
         )
 
@@ -483,6 +566,7 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
                 capacities
                 , source
                 , sink
+                , nodes_quantity
             )
         else:
             # sparse graph
@@ -534,13 +618,13 @@ if __name__ == '__main__':
 
     if 1 == len(sys.argv):
         print("Usage: python chemin_augmentant.py file_path <algorithm>")
-        instance = "inst-2-0.25.txt"
-        # instance = "inst-3-0.2.txt"
+        # instance = "inst-2-0.25.txt"
+        instance = "inst-3-0.2.txt"
         # instance = "inst-3-0.22.txt"
         # instance = "inst-3-0.3.txt"
         # instance = "inst-4-0.25.txt"
         # instance = "inst-100-0.1.txt"
-        instance = "inst-500-0.1.txt"
+        # instance = "inst-500-0.1.txt"
 
         algorithm = None
         # algorithm = "distance"
