@@ -5,7 +5,7 @@
 ### Ford-Fulkerson
 [Wikipedia](https://en.wikipedia.org/wiki/Ford%E2%80%93Fulkerson_algorithm)
 
-### Edmonds-Karp
+#### with BFS = Edmonds-Karp
 [Wikipedia](https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm)
 ### Dinic
 ### Preflow-Push - Push-Relabel

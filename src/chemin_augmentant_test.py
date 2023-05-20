@@ -97,7 +97,8 @@ def save(path, elapsed_time, origin_file=None):
 
 
 if __name__ == '__main__':
-    main('edmonds_karp')
     # main('edmonds_karp', 'debug')
-    # main('relabel_to_front')
     # main('distance', 'debug')
+
+    main('edmonds_karp')
+    # main('relabel_to_front')
