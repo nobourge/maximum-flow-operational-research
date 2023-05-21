@@ -101,5 +101,5 @@ if __name__ == '__main__':
     # main('distance', 'debug')
 
     main('edmonds_karp')
-    # main('relabel_to_front')
+    main('relabel_to_front')
     # main('highest_label')

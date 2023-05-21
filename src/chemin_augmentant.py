@@ -5,6 +5,7 @@
 # sans utiliser de solveur externe
 # et qui la stock dans un fichier model-n-p.path
 import os
+import time
 from collections import deque
 
 import numpy as np
@@ -210,7 +211,7 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
 
     else:
         if nodes_quantity < arcs_quantity:
-            # dense graph
+            print('Using O(V²E) relabel_to_front algorithm')
             algorithm = 'relabel_to_front'
             max_flow = relabel_to_front(capacities
                                         , flow
@@ -220,6 +221,7 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
                                         )
         else:
             # sparse graph
+            print('Using O(VE²) edmonds_karp algorithm')
             algorithm = 'edmonds_karp'
             max_flow = edmonds_karp(graph
                                     , capacities
@@ -233,33 +235,27 @@ def solve_max_flow_augmenting_paths(file_path, algorithm=None):
     print(f'file_path: {file_path}')
     print(f'Max flow: {max_flow}')
 
-    write_output_file_to(algorithm, file_path, nodes_quantity,
-                         capacities, max_flow, flow)
+    write_output_file_to(algorithm, file_path, nodes_quantity
+                         , max_flow, flow)
 
 
 @profile
-def write_output_file_to(path, file_path, nodes, capacities, max_flow, flow):
-    logger.info(f'Writing output origin_file to {path}')
-    logger.debug(f'file_path: {file_path}')
-    logger.debug(f'nodes: {nodes}')
-    logger.debug(f'capacities: {capacities}')
-    logger.debug(f'max_flow: {max_flow}')
-
+def write_output_file_to(path, file_path, nodes, max_flow, flow):
     if not os.path.exists(path):
-        logger.debug(f'Creating directory {path}')
+        # logger.debug(f'Creating directory {path}')
         os.makedirs(path)
     with open(path + "/" + file_path.replace('Instances',
                                              'Path').replace('inst',
                                                              'model').replace('.txt',
                                                                               '.path'), 'w') as f:
-        logger.info(f'{max_flow}\n')
+        # logger.info(f'{max_flow}\n')
         f.write(f'{max_flow}\n')
+        lines = []
         for i in range(nodes):
             for j in range(nodes):
                 if flow[i][j] > 0:
-                    logger.info(f'{i} {j} {flow[i][j]}\n')
-                    f.write(f'{i} {j} {flow[i][j]}\n')
-
+                    lines.append(f'{i} {j} {int(flow[i][j])}\n')
+        f.writelines(lines)
 if __name__ == '__main__':
     import sys
 
@@ -273,12 +269,13 @@ if __name__ == '__main__':
         # instance = "inst-3-0.3.txt"
         # instance = "inst-4-0.25.txt"
         instance = "inst-100-0.1.txt"
+        # instance = "inst-100-0.2.txt"
         # instance = "inst-500-0.1.txt"
 
         algorithm = None
         # algorithm = "distance"
         # algorithm = "edmonds_karp"
-        algorithm = "relabel_to_front"
+        # algorithm = "relabel_to_front"
         log_option = True
         # log_option = False
         # print("Example: "
@@ -300,4 +297,8 @@ if __name__ == '__main__':
         logger.info("logger debug mode disabled")
         logger.remove()
 
+    # timer
+    start_time = time.time()
     solve_max_flow_augmenting_paths(instance, algorithm)
+    end_time = time.time()
+    print(f'Execution time: {end_time - start_time} seconds')
