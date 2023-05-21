@@ -107,13 +107,13 @@ def relabel_to_front(capacities
     excess = [0] * nodes_quantity  # flow into node minus flow from node
     seen   = [0] * nodes_quantity  # neighbours seen since last relabel
     # node "queue"
-    nodelist = [i for i in range(nodes_quantity) if i != source and i != sink]
+    excess_nodes = [i for i in range(nodes_quantity) if i != source and i != sink]
     def push(u, v):
         send = min(excess[u], capacities[u][v] - flow[u][v])
-        flow[u][v] += send
-        flow[v][u] -= send
+        update(flow, v, u, send)
         excess[u] -= send
         excess[v] += send
+
 
     def relabel(u):
         # Find smallest new height making a push possible,
@@ -129,6 +129,9 @@ def relabel_to_front(capacities
                 v = seen[u]
                 if capacities[u][v] - flow[u][v] > 0 and height[u] > height[v]:
                     push(u, v)
+                    if excess[
+                        sink] == 0:  # Check if maximum flow reached
+                        return True
                 else:
                     seen[u] += 1
             else:  # we have checked all neighbours. must relabel
@@ -142,12 +145,16 @@ def relabel_to_front(capacities
         push(source, v)
 
     p = 0
-    while p < len(nodelist):
-        u = nodelist[p]
+    while p < len(excess_nodes):
+        u = excess_nodes[p]
         old_height = height[u]
-        discharge(u)
+        # discharge(u)
+        max_flow_reached = discharge(u)
+        if max_flow_reached:
+            break  # Terminate the loop if maximum flow reached
+
         if height[u] > old_height:
-            nodelist.insert(0, nodelist.pop(p))  # move to front of list
+            excess_nodes.insert(0, excess_nodes.pop(p))  # move to front of list
             p = 0  # start from front of list
         else:
             p += 1
@@ -266,8 +273,8 @@ if __name__ == '__main__':
         # instance = "inst-3-0.22.txt"
         # instance = "inst-3-0.3.txt"
         # instance = "inst-4-0.25.txt"
-        # instance = "inst-100-0.1.txt"
-        instance = "inst-500-0.1.txt"
+        instance = "inst-100-0.1.txt"
+        # instance = "inst-500-0.1.txt"
 
         algorithm = None
         # algorithm = "distance"
