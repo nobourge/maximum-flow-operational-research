@@ -100,5 +100,5 @@ if __name__ == '__main__':
     # main('edmonds_karp', 'debug')
     # main('distance', 'debug')
 
-    main('edmonds_karp')
-    # main('relabel_to_front')
+    # main('edmonds_karp')
+    main('relabel_to_front')
