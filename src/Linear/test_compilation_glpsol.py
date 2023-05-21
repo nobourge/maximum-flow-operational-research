@@ -1,12 +1,12 @@
 import subprocess
 import os
-
+from linear_model_generation import go_to_src
 
 def unit_compilation(file):
     #file = 'inst-100-0.2.lp'
     #    `glpsol --lp inst-xxx.lp -o ./Solutions/inst-xxx.sol`
     file = file.replace('.txt', '.lp')
-    os.chdir('../..')
+    go_to_src()
     os.chdir('Instances/Solutions')
 
     if os.path.exists(file.replace('.lp', '.sol')):
