@@ -31,6 +31,11 @@ def clean_file(file_path):
     except :
         logger.info(f'type {file_path} is not recognized')
 
+def clean_all_files():
+    for file in os.listdir(os.path.join(os.getcwd(),'Instances/Instances')):
+        clean_file(os.path.join(os.getcwd(),'Instances/Instances',file))
+
+
 def separate_arc_twins(arcs_data):
     arc_twins = []
     unique_arcs = []
@@ -80,10 +85,11 @@ def go_to_src():
 
 def solve_max_flow_glpk(file_path):
     # Read input file
-    with open(file_path, 'r') as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
     # Parse input file
+    print(type(line.split()[1] for line in lines[:5]))
     nodes = int(lines[0].split()[1])
     source = int(lines[1].split()[1])
     sink = int(lines[2].split()[1])
@@ -155,59 +161,19 @@ def solve_max_flow_glpk(file_path):
         integer += f'f_{arc[0]}_{arc[1]} \n'
 
     # Write to a new file
-    model = [maximization, "\n", constraints, "\n", integer]
+    model = [maximization, "\n", constraints, "\n", integer, "\n", "end"]
 
-    with open(file_path.replace('txt','lp'), 'w') as f:
+    with open(file_path.replace('.txt','.lp'), 'w') as f:
         f.writelines(model)
 
     return model
 
 if __name__ == '__main__':
 
-    files = os.listdir('./Instances/Instances')
-    files.sort()
+    file_path = sys.argv[1]
+    file_path = os.path.abspath(file_path)
 
-    root = os.chdir('./')
-    cumulated_time = 0
+    print(file_path)
+    print(type(file_path))
 
-    last_file = ''
-
-    for file in files:
-
-        file_path = os.path.abspath(f"Instances/Instances/{file}")
-        #clean_file(file_path)
-
-        while cumulated_time < 300:
-
-            start = time.time()
-            try:
-                logger.info(f"Run model generation on {file}")
-                subprocess.run(["python3", "model_generation.py", file_path])
-
-            except:
-                logger.info("Linear model not produced")
-
-            end = time.time()
-            cumulated_time += end
-
-            elapsed_time = end - start
-            logger.info(f"Elapsed time : {elapsed_time} seconds")
-
-            if not os.path.exists("Timing"):
-                os.makedirs("Timing")
-            with open('Timing/' + file.replace('inst', 'model').replace('.txt', '.lp'), 'w') as f:
-                f.write(f'Elapsed time: {end - start} seconds')
-
-            with open('Timing/all_in_seconds.txt', 'a') as f:
-                f.write(f'{end - start} for {file} \n')
-
-        last_file = file
-
-    logger.info(f"Last lp file produced is {last_file}")
-
-#    file_path = sys.argv[1]
-#    file_path = os.path.abspath(file_path)
-#    print(file_path)
-#    print(type(file_path))
-#    clean_file(file_path)
-#    solve_max_flow_glpk(file_path)
+    solve_max_flow_glpk(file_path)

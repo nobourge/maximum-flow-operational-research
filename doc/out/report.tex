@@ -140,18 +140,18 @@ Les contraintes proviennent des conditions pour $f$ d'être un flot.\\
 
 \subsection{Algorithme}
 
-On a considéré des{\it arcs jumeaux} comme étant les arcs ayant même noeud de départ et d'arrivée mais avec des capacités différentes\\
+On a considéré des{\it arcs jumeaux} comme étant les arcs ayant même noeud de départ et d'arrivée mais avec des capacités différentes.\\
 Ainsi, on a notée le flot associé à ces arcs : $f\_i\_j\_c_{ij}$ pour chaque capacité. On ne néglige ainsi aucun arc dans notre résolution mais cela augmente le nombre de variables.\\
 
 {\bf Structure du code } : \\
 Il y a un dossier \texttt{Linear} qui contient le fichier \texttt{generate\_model.py}. \\
-Les instances se trouvent dans \texttt{./src/Instances/Instances} et \texttt{generate\_model.py} produit les modèles dans \texttt{./src/Instances/model}.
+Les instances se trouvent dans \texttt{./src/Instances/Instances} et \texttt{generate\_model.py} produit les modèles dans \texttt{./src/Instances/Instances}.
 On lance alors depuis le dossier \texttt{src} : 
 % Afficher du code bash
 \texttt{python3 Linear/generate\_model.py Instances/Instances/inst-100-0.1.txt}
 Cela crée le fichier \texttt{Instances/Models/model-100-0.1.lp}.\\
  Afin de résoudre ceci on exécute la commande : \\
- \textt{glpsol - -lp Instances/Models/model-100-0.1.lp -o Instances/Solutions/model-100-0.1.sol}
+ \textt{glpsol - -lp Instances/Instances/model-100-0.1.lp -o Instances/Solutions/model-100-0.1.sol}
 
 
 \section{Chemins augmentants}
@@ -172,9 +172,46 @@ Ensuite, on ... % A terminer
 
 \section{Résultats}
     
- On a réalisé nos tests sur le système d’exploitation : Windows 11 \& MacOS Ventura.\\
+ On a réalisé nos tests sur les systèmes d’exploitation : Windows 11 \& MacOS Ventura.\\
 
-— une analyse des résultats de la résolution des différentes instances.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Fichier} & \textbf{Chemin augmentant (s)} & \textbf{Linear (s)} & \textbf{Écart (s)} \\
+\hline
+inst-2-0.25.txt & 0.48001837730407715 & - & - \\
+inst-3-0.2.txt & 0.44527459144592285 & - & - \\
+inst-3-0.22.txt & 0.45975613594055176 & - & - \\
+inst-3-0.3.txt & 0.4385108947753906 & - & - \\
+inst-4-0.25.txt & 0.4311044216156006 & - & - \\
+inst-99-0.1.txt & 2.452136754989624 & - & - \\
+inst-100-0.1.txt & 2.3835582733154297 & 0.1880660057067871 & 2.1954922676086426 \\
+inst-101-0.1.txt & 2.2259793281555176 & - & - \\
+inst-100-0.2.txt & 5.815276145935059 & 0.3773059844970703 & 5.437970161437988 \\
+inst-200-0.1.txt & 30.330101013183594 & 1.0871500968933105 & 29.242950916290283 \\
+inst-100-0.3.txt & 13.9296293258667 & 0.6906599998474121 & 13.238969326019287 \\
+inst-300-0.1.txt & 149.61344861984253 & 5.038102865219116 & 144.5753457546234 \\
+inst-200-0.2.txt & 139.8529920578003 & 3.298656940460205 & 136.5543351173401 \\
+inst-400-0.1.txt & 499.61123180389404 & 12.10365080833435 & 487.5075809955597 \\
+inst-500-0.1.txt & - & 29.506887912750244 & - \\
+inst-500-0.2.txt & - & 120.00071883201599 & - \\
+inst-500-0.2.txt & - & 382.6500413417816 & - \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Critique des résultats}
+
+Déjà on constate qu'on n'arrive pas à dépasser les $500$ nœuds en temps raisonnable. 
+On voit également que le calcul par méthode linéaire est beaucoup plus rapide. 
+Comme il s'agit simplement d'écriture de string dans un fichier texte cela paraît raisonnable. Néanmoins, nous sommes surpris que l'on ne puisses traiter que $500$ nœuds avec une densité de $0.2$ avec de simples écritures comme celle-ci.
+
+Cette faible capacité de calcul peuvent être liée à l'optimisation du traitement de ces données. On a mis qu'une seule écriture dans le fichier \texttt{inst-xxx-0.i.lp} par le script de \texttt{model\_generation.py} mais ceci ne suffit pas à l'optimiser. 
+
+
 
 
 
@@ -201,8 +238,13 @@ les instances. S´electionnez les instances afin d’ˆetre le plus complet dans
 
     \newpage
 
-    \subsection{Conclusions }
-
+    \subsection{Conclusion}
+    
+    On se rend compte sur un problème aussi limité et organisé que le problème du flot maximal à partir de $500$ noeuds avec une densité de $0.2$  nos machines n'y arrivent plus.
+    
+    Il doit y avoir une possibilité d'optimisation. Mais est-ce que la meilleure optimisation nous permettrait de faire tourner toutes ces instances ? Comment le mesurer ? 
+    
+    Avec ce projet on se rend compte 
 
 
     \newpage

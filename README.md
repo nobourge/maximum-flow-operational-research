@@ -1,4 +1,27 @@
-# project-default-template
+# Algorithmique et recherches opérationnelles 2023
+
+## Problème du flot max
+
+
+### Lancement programme linéaire
+
+Depuis le dossier `src/`
+```bash
+python3 Linear/model_generation.py Instances/Instances/inst-100.0.1.txt
+```
+Produit le fichier `Instances/Instances/inst-100.0.1.lp`
+
+Puis la résoultion via la commande : 
+```bash
+glpsol --lp Instances/Instances/inst-100.0.1.lp -o Instances/Solutions/inst-100.0.1.sol
+```
+
+TEST TIMING
+```bash
+python3 Linear/routine.py
+```
+
+
 
 ![Visualization of the repository visualizer diagram](./diagram.svg)
 
