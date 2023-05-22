@@ -7,7 +7,7 @@
 
 Depuis le dossier `src/`
 ```bash
-python3 Linear/model_generation.py Instances/Instances/inst-100.0.1.txt
+python3 Linear/generate_model.py Instances/Instances/inst-100.0.1.txt
 ```
 Produit le fichier `Instances/Instances/inst-100.0.1.lp`
 
