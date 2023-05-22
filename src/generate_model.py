@@ -163,7 +163,7 @@ def solve_max_flow_glpk(file_path):
     # Write to a new file
     model = [maximization, "\n", constraints, "\n", integer, "\n", "end"]
 
-    with open(file_path.replace('.txt','.lp'), 'w') as f:
+    with open(file_path.replace('inst', 'model').replace('.txt','.lp'), 'w') as f:
         f.writelines(model)
 
     return model
@@ -172,8 +172,5 @@ if __name__ == '__main__':
 
     file_path = sys.argv[1]
     file_path = os.path.abspath(file_path)
-
-    print(file_path)
-    print(type(file_path))
 
     solve_max_flow_glpk(file_path)

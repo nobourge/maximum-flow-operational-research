@@ -54,12 +54,60 @@
 
 \begin{document}
 
-\title{Flot Maximum}
-\subtitle{Projet d'algorithme et recherche opérationnelle 2023}
-\author{Thomas Suau, Noé Bourgeois }
-\date{March 2023}
 
-\maketitle
+%%%%%Page de garde
+
+\begin{center}
+
+	\footnotesize{
+  	\large \bf Département d'Informatique\\
+	\large \bf Bachelor 3ème année de sciences informatiques\\
+
+    }
+
+	\vspace*{0.5cm}
+	\large{Algorithmique et recherches opérationnelles \\}
+
+	\vspace*{0.7cm}
+
+	\begin{tabular}{c}
+		\hline
+		~\\
+		\huge\textbf {Problème} \\
+		\huge\textbf {du}\\
+		\huge\textbf {Flot maximal} \\
+		\huge\textbf {\large Enseignant: Bernard Fortz}\\
+		
+		~\\
+		\hline
+	\end{tabular}
+
+	\vspace*{0.7cm}
+
+
+	\vspace*{0.5cm}
+
+	\large par\\
+	
+	\vspace*{0.2cm}
+          \large  \bf Noe  \bsc{Bourgeois}\\
+          \large \bf et \\
+          \large \bf Thomas \bsc{Suau}\\
+ 
+          
+          \vspace*{1cm}
+
+        \normalsize{Bachelor Sciences Informatiques}
+	\normalsize{Année 2022-2023}
+
+	\vspace*{0.7cm}
+
+
+	\includegraphics[scale=0.5]{logo.png}\\
+
+\end{center}
+
+\thispagestyle{empty}
 
  \newpage
 
@@ -100,7 +148,7 @@
     {\bf Proposition 1} : Pour tout graphe $G$ fini il existe un flot max. \\
     
     {\it Démonstration} : On chercher à prouver L'existence d'un plus grand élément de $\mathcal{F} = \lbrace (f_{i,j})_{(i,j) \in A} | f \text{est un flot} \rbrace$. D'abord, on voit que $\mathcal{F}$ n'est pas vide car le vecteur $(0)_{(i,j) \in A}$ est dans $\mathcal{F}$.\\
-    On remarque que $\mathcal{F}$ est fini car $\mathcal{F} \subset \times_{(i,j)\in A} \lbrace 0,...,c_{i,j}$ et $c_{i,j} \in C$ est fini pour tout $(i,j) \in A$. Or tout ensemble fini admet un plus grand et un plus petit élément au sens de l'inclusion. \qed
+    On remarque que $\mathcal{F}$ est fini car $\mathcal{F} \subset \times_{(i,j)\in A} \lbrace 0,...,c_{i,j}\rbrace $ et $c_{i,j} \in C$ est fini pour tout $(i,j) \in A$. Or tout ensemble fini admet un plus grand et un plus petit élément au sens de l'inclusion. \qed
 
 {\bf Proposition 2} : Pour tout flot $f \in \mathcal{F}$ dans $G$, on a l'égalité : $$ \sum_{j : (s,j) \in A} f_{s,j} = -\sum_{i : (i,t) \in A} f_{i,t}. $$    
     
@@ -140,18 +188,18 @@ Les contraintes proviennent des conditions pour $f$ d'être un flot.\\
 
 \subsection{Algorithme}
 
-On a considéré des{\it arcs jumeaux} comme étant les arcs ayant même noeud de départ et d'arrivée mais avec des capacités différentes.\\
+On a considéré des {\it arcs jumeaux} comme étant les arcs ayant même noeud de départ et d'arrivée mais avec des capacités différentes.\\
 Ainsi, on a notée le flot associé à ces arcs : $f\_i\_j\_c_{ij}$ pour chaque capacité. On ne néglige ainsi aucun arc dans notre résolution mais cela augmente le nombre de variables.\\
 
-{\bf Structure du code } : \\
+{\bf Structure du dossier } : \\
 Il y a un dossier \texttt{Linear} qui contient le fichier \texttt{generate\_model.py}. \\
-Les instances se trouvent dans \texttt{./src/Instances/Instances} et \texttt{generate\_model.py} produit les modèles dans \texttt{./src/Instances/Instances}.
+Les instances se trouvent dans \texttt{./src} et \texttt{generate\_model.py} produit les modèles dans \texttt{./src}.
 On lance alors depuis le dossier \texttt{src} : 
 % Afficher du code bash
-\texttt{python3 Linear/generate\_model.py Instances/Instances/inst-100-0.1.txt}
-Cela crée le fichier \texttt{Instances/Models/model-100-0.1.lp}.\\
+\texttt{python3 Linear/generate\_model.py inst-100-0.1.txt}
+Cela crée le fichier \texttt{./model-100-0.1.lp}.\\
  Afin de résoudre ceci on exécute la commande : \\
- \textt{glpsol - -lp Instances/Instances/model-100-0.1.lp -o Instances/Solutions/model-100-0.1.sol}
+ \textt{glpsol - -lp model-100-0.1.lp -o model-100-0.1.sol}
 
 
 \section{Chemins augmentants}
@@ -166,7 +214,7 @@ Cette algorithme consiste à partir du flot nul $(0)_{(i,j) \in A}$ puis prendre
 On sature le $st$-chemin avec le minimum de la capacité sur le chemin choisit.\\
 Ensuite, on ... % A terminer  
 
-{\bf } : \\
+{\bf  } : \\
 
 {\bf } : \\
 
@@ -207,22 +255,12 @@ inst-500-0.2.txt & - & 382.6500413417816 & - \\
 
 Déjà on constate qu'on n'arrive pas à dépasser les $500$ nœuds en temps raisonnable. 
 On voit également que le calcul par méthode linéaire est beaucoup plus rapide. 
-Comme il s'agit simplement d'écriture de string dans un fichier texte cela paraît raisonnable. Néanmoins, nous sommes surpris que l'on ne puisses traiter que $500$ nœuds avec une densité de $0.2$ avec de simples écritures comme celle-ci.
+Comme il s'agit simplement d'écriture de string dans un fichier texte cela paraît raisonnable. Néanmoins, nous sommes surpris que l'on ne puisses traiter que $500$ nœuds avec une densité de $0.2$ avec de simples écritures comme celles-ci.
 
-Cette faible capacité de calcul peuvent être liée à l'optimisation du traitement de ces données. On a mis qu'une seule écriture dans le fichier \texttt{inst-xxx-0.i.lp} par le script de \texttt{model\_generation.py} mais ceci ne suffit pas à l'optimiser. 
-
-
-
+Cette faible capacité de calcul peut être liée à une mauvaise optimisation d'écriture dans le cas linéaire. 
+On n'a mis qu'une seule écriture dans le fichier \texttt{inst-xxx-0.i.lp} par le script de \texttt{model\_generation.py} mais ceci ne suffit pas à l'optimiser. 
 
 
-   pour les deux m´ethodes de r´esolution.
-
-Vous pouvez analyser
-   les temps de r´esolution moyens ainsi que
-
-   l’´ecart-type pour les diff´erentes tailles
-d’instances.
-   Tˆachez d’interpr´eter le pourquoi des r´esultats et
 
    identifiez si une m´ethode semble plus
 appropri´ee.
